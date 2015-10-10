@@ -1,4 +1,3 @@
 //command line command
 g++ -std=c++11 -I ./Eigen PolymerCpp.cpp -o ../Debug/PolymerCpp.exe
 
-// do we need non-integer number of segments? it could be very memory-demanding

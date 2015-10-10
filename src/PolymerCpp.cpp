@@ -99,7 +99,7 @@ private:
     double numSegments;
     int pLength;
     Eigen::Vector3d initPoint;
-    vector<Eigen::Vector3d> path;
+    Eigen::Vector3d path;
 
 
 public:
@@ -109,6 +109,7 @@ public:
         numSegments = in_numSegments;
         pLength = in_pLength;
         initPoint = *in_initPoint;
+        path = Eigen::Vector3d::Constant(0.0);
     }
 
     void makePath()
@@ -155,7 +156,7 @@ public:
         // split numSegments into integer and leftover
         int numSegInt; double numSegFrac;
         numSegInt = (int)numSegments;
-        numSegFrac = numSegments - (float)numSegInt;
+        numSegFrac = numSegments - (double)numSegInt;
 
         // If numSegFrac is not zero, allocates memory also for leftover vector
         int numSeg = (abs(numSegFrac)>0.001) ? numSegInt : numSegInt-1;
@@ -163,7 +164,7 @@ public:
         // Create the displacement distances in the tangent planes
         double *angDisp = new double[numSeg];
         double *tanPlaneDisp = new double[numSeg];
-        double sigma = pow(2.0 / (float)pLength, 0.5);
+        double sigma = pow(2.0 / (double)pLength, 0.5);
         for (int i=0; i<numSeg; i++)
         {
             angDisp[i] = sigma * randNormalReal(randGenerator);
@@ -186,7 +187,9 @@ public:
         // Primary iterative loop for creating the chain
         Eigen::Vector3d currPoint = initPoint;
         Eigen::Vector3d * workingPath = new Eigen::Vector3d[numSeg];
-        Eigen::Vector3d dispVector;
+        Eigen::Vector3d dispVector, nextPoint;
+        double projDistance;
+        workingPath[0] = currPoint;
         for (int i=0; i<numSeg; i++)
         {
             // Create a displacement in the plane tangent to currPoint
@@ -194,14 +197,200 @@ public:
 
             // Check if displacement and currPoint vectors are parallel
             while (dispVector.squaredNorm()<0.01)
+            {
+                Eigen::Vector3d * newRandVec = randPointSphere(1);
+                dispVector = currPoint.cross(*newRandVec);
+            }
+
+            // Move the currPoint vector in the tangent plane
+            dispVector = (dispVector / dispVector.squaredNorm()) *
+                         tanPlaneDisp[i];
+
+            // Back Project new point onto sphere
+            projDistance = 1 - cos(angDisp[i]);
+            nextPoint = ((1 - projDistance) * currPoint) + dispVector;
+
+            // Append nextPoint to array of vectors on the path
+            workingPath[i] = nextPoint;
+            currPoint = nextPoint;
         }
 
+        // Add up the vectors in path to create the polymer
+        for (int i=0; i<numSeg; i++)
+        {
+            path += workingPath[i];
+        }
+    }
+
+    void makeNewPath()
+    /* Clears current path and makes a new one.
+     *
+     * Parameters
+     * ----------
+     * initPoint : array of float
+     *     Coordinates of the first point.
+     *
+     */  
+    {
+    path = initPoint;
+    makePath();
+    checkPath();
     }
 
     Eigen::Vector3d getInitPoint()
     {
         return initPoint;
     }
+};
+
+class Collector
+/* Creates random walk paths and collects their statistics.
+ * 
+ * A Collector generates a user-defined number of random walk paths
+ * with possibly different lengths by sending the walk parameters to
+ * a Path object. After the path has been generated, the statistics
+ * that describe the path are collected and binned into a histogram.
+ * 
+ * Parameters
+ * ----------
+ * pathLength : vector of floats
+ *     The length of each simulated path
+ * nameDB: string
+ *     Name of database
+ * segConvFactor : float
+ *     Conversion factor between the user units and path segments
+ *     (Default is 1)
+ * 
+ * Attributes
+ * ----------
+ * myPath : path object
+ *     The path for generating walks.
+ */
+{
+public:
+    int numPaths;
+    vector<double> pathLength;
+    string nameDB;
+    double segConvFactor;
+
+    Collector() { }
+
+    Collector(vector<double> & in_pathLength, 
+              string in_nameDB,
+              double in_segConvFactor = 1.0)
+    {
+        numPaths = in_pathLength.size();
+        segConvFactor = in_segConvFactor;
+        nameDB = in_nameDB;
+        convSegments(pathLength, in_pathLength, segConvFactor, true);
+    }
+
+protected:
+    void convSegments(vector<double> & pathLength,
+                      vector<double> & in_pathLength,
+                      double segConvFactor,
+                      bool multiplyBool)
+    /* Convert path parameters into segments.
+     * Not the most efficient way,
+     * but this is not a demanding operation.
+     * 
+     * Parameters
+     * ----------
+     * pathLength : vector of floats
+     *     Resulting segments
+     * in_pathLength : vector of floats
+     *     The parameters to convert into segments
+     * segConvFactor: float
+     *     Conversion factor betwee the user units and path segments
+     * multiplyBool : bool
+     *     Multiply or divide by the conversion factor
+     */
+    {
+        for (int i=0; i<pathLength.size(); i++)
+        {
+            if (multiplyBool) {
+                pathLength[i] = in_pathLength[i] * segConvFactor;
+            }
+            else {
+                pathLength[i] = in_pathLength[i] / segConvFactor;
+            }
+        }
+        return;
+    }
+};
+
+class WLCCollector: public Collector
+/*   Collector for the wormlike chain.
+ *
+ *   Parameters
+ *   ----------
+ *   numPaths : int
+ *       The number of paths to collect before stopping the simulation
+ *   pathLength : array of float
+ *       The length of each simulated path in genomic length
+ *   linDensity : float
+ *       The number of base pairs per user-defined unit of length
+ *   persisLength : float
+ *       The path's persistence length in user-defined units of length
+ *   segConvFactor : float (optional)
+ *       Conversion factor between the user units and path segments
+ *       (Default is 1)
+ *   locPrecision : float (optional)
+ *       Standard deviation of the Gaussian defining the effective
+ *       system PSF. (Default is 0, meaning no bumps are made)
+ *   fullSpecParam : bool (optional)
+ *       Do linDensity and persisLength define all the parameter-space
+ *       points to simulate, or do they instead define the points in a
+ *       grid to be generated with meshgrid? In the first case, the
+ *       number of points to simulate is equal to the length of
+ *       persisLength OR linDensity, whereas in the second case it's
+ *       equal to the number of points in persisLength TIMES the number
+ *       of points in linDensity. (Default is false; the points will
+ *       define a grid in this case).
+ */
+{
+public:
+    WLCCollector(int in_numPaths,
+                 vector<double> & in_pathLength,
+                 double in_linDensity,
+                 double in_persisLength,
+                 string in_nameDB,
+                 double in_segConvFactor = 1.0,
+                 double in_locPrecision = 0.0,
+                 bool in_fullSpecParam = false)
+    {
+        pathLength = in_pathLength;
+        linDensity = in_linDensity;
+        numPaths = in_numPaths;
+        persisLength = in_persisLength;
+        nameDB = in_nameDB;
+        segConvFactor = in_segConvFactor;
+        locPrecision = in_locPrecision;
+        fullSpecParam = in_fullSpecParam;
+        convSegments(pathLength, in_pathLength, segConvFactor, true);
+
+        // Convert from user-defined units to simulation units
+        linDensity /= segConvFactor;
+        persisLength *= segConvFactor;
+        locPrecision *= segConvFactor;
+
+        //startCollector();
+    }
+
+private:
+    int numPaths;
+    vector<double> pathLength;
+    double linDensity;
+    double persisLength;
+    string nameDB;
+    double segConvFactor;
+    double locPrecision;
+    bool fullSpecParam;
+/*
+    startCollector()
+    // Begin collecting wormlike chain conformation statistics.
+    if (fullSpecParam
+*/
 };
 
 /* Class which stores date and time in formatted strings at the time
