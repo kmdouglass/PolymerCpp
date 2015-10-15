@@ -1,3 +1,6 @@
 //command line command
-g++ -std=c++11 -I ./Eigen PolymerCpp.cpp -o ../Debug/PolymerCpp.exe
+g++ -std=c++11 -I ./Eigen PolymerCpp.cpp -o ../Debug/PolymerCpp
 
+// line 403 and 406, why numSegments[0]??
+
+// why is randStartDir not normalised?
