@@ -13,15 +13,20 @@
 #include <chrono>         // Timing
 #include <stdexcept>      // Throwing exceptions
 #include <fstream>        // Saving/Loading data
+#include <limits>         // Limits of data types
+#include <iomanip>        // std::setprecision
+
 
 #define pi 3.1415926
 
 using namespace std;
 
-// defines engine and distribution for random number generation
-unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+void seedRandom();
 
-std::default_random_engine randGenerator(seed);
+
+// defines engine and distribution for random number generation
+unsigned seed; 
+std::default_random_engine randGenerator(1u);
 std::uniform_real_distribution<double> randUniformReal(0.0,1.0);
 std::normal_distribution<double> randNormalReal(0.0,1.0);
 
@@ -56,30 +61,41 @@ class WormlikeChain: public Path
  * 
  * Member variables:
  * -----------------
- * numSegments : float
- *     The number of segments in the chain. Must be >=1
- *     and need not be an integer.
- * pLength: int
+ * numPaths: int
+ *     number of paths to be simulated
+ * pathLength: vector<double> of length numPaths
+ *     for each path contains its genomic length
+ * linDensity: double
+ *      linear density of the chain 
+ * persisLength: double
  *     The persistence length in units of chain segments.
+ * locPrecision: double
+ *      localization precision used for bumping the chain locations
  * initPoint : pointer to Eigen::Vector3d
  *     The coordinates of the first point of the chain.
  * path : <vector> of Eigen::Vector3d points
  *     vector, whose elements are 3d vectors describing
  *     endpoints of the segments comprising the path
  */
+
 {
 public:
-
-    double numSegments;
-    int pLength;
+    int numPaths;
+    vector<double> pathLength;
+    double linDensity;
+    double persisLength;
+    double segConvFactor;
+    double locPrecision;
     Eigen::Vector3d initPoint;
     std::vector<Eigen::Vector3d> path;
 
-    WormlikeChain(double in_numSegments, int in_pLength,
+    WormlikeChain(int in_numPaths, vector<double> & in_pathLength, 
+                  double in_linDensity, double in_persisLength,
+                  double in_segConvFactor, double in_locPrecision, 
                   Eigen::Vector3d * in_initPoint);
     /* Constructor */
 
-    void makePath();
+    void makePath(double in_pathLength);
     /*  Create the wormlike chain.
      *  
      *  The wormlike chain is created by first choosing the sizes of
@@ -110,7 +126,7 @@ public:
      *  Initial point to start polymer is determined by initPoint,
      *  which is set when initializing the class WormlikeChain. */
 
-    void makeNewPath();
+    void makeNewPath(double pathLength);
     /* Clears current path and makes a new one.
      * First point is determined by initPoint. */
 
@@ -143,28 +159,28 @@ public:
      *     The radius of gyration of the path object. */
 };
 
-class WormlikeChainDict
-/* A container class for the WormlikeChain instance 
+/*class WormlikeChainDict
+ * A container class for the WormlikeChain instance 
  * 
  * Member variables:
  * -----------------
  * chain: pointer to a new WormlikeChain instance
  *      WLC instance has to be destroyed manually
  *     
- * numSegments: double SHOULD BE VECTOR OF DOUBLE
+ * numSegments: vector<double>
  *      Number of segments to simulate for each chain iteration
- * locPrecision: double SHOULD ALSO BE VECTOR OF DOUBLES?
+ * locPrecision: double
  *      localization precision used for bumping the chain locations 
  * linDensity: double
  *      linear density of the chain
  * persisLength: double
- *      persistence length of the chain*/
+ *      persistence length of the chain
 
 {
 public:
     
     WormlikeChain * chain;
-    double numSegments;
+    vector<double> numSegments;
     double locPrecision;
     double linDensity;
     double persisLength;
@@ -172,7 +188,7 @@ public:
 
     // Constructor
     WormlikeChainDict(WormlikeChain * in_chain,
-                      double in_numSegments,
+                      vector<double> * in_numSegments,
                       double in_locPrecision,
                       double in_linDensity,
                       double in_persisLength,
@@ -180,7 +196,7 @@ public:
     // Destructor, deletes the WLC instance
     ~WormlikeChainDict();
 };
-
+*/
 class RgDict
 /* A container for gathered data of gyration radii
  *
@@ -200,14 +216,15 @@ public:
 
     std::vector<double> Rg;
     std::vector<double> RgBump;
+    double pathLength;
     double linDensity;
     double persisLength;
     double segConvFactor;
 
     // Constructor
     RgDict(std::vector<double> * in_Rg, std::vector<double> * in_RgBump,
-        double in_linDensity, double in_persisLength, double in_segConvFactor,
-        bool convert = false);
+        double in_pathLength, double in_linDensity, double in_persisLength,
+        double in_segConvFactor, bool convert = false);
 
     void addToDBfile(std::ofstream & fileDB);
     /* Adds the RgDict to database file in following format:
@@ -238,7 +255,7 @@ vector<RgDict*> * readFromDBfile(std::ifstream & fileDB);
  * --------
  * data: pointer to new vector<RgDict*> */
 
-RgDict * parSimChain(WormlikeChainDict * chainDict);
+RgDict * parSimChain(WormlikeChain * chain);
 /*   Pimary processing for-loop to be parallelized.
   * 
   * parSimChain(data) is the most intensive part of the simulation. It
@@ -273,16 +290,16 @@ class WLCCollector
  *   -----------------
  *   numPaths : int
  *       The number of paths to collect before stopping the simulation
- *   pathLength : vector of floats
+ *   pathLength : vector of doubles
  *       The length of each simulated path in genomic length
- *   linDensity : vector of floats
+ *   linDensity : vector of doubles
  *       The number of base pairs per user-defined unit of length
- *   persisLength : vector of floats
+ *   persisLength : vector of doubles
  *       The path's persistence length in user-defined units of length
- *   segConvFactor : float (optional)
+ *   segConvFactor : double (optional)
  *       Conversion factor between the user units and path segments
  *       (Default is 1.0)
- *   locPrecision : float (optional)
+ *   locPrecision : double (optional)
  *       Standard deviation of the Gaussian defining the effective
  *       system PSF. (Default is 0, meaning no bumps are made)
  *   fullSpecParam : bool (optional)
@@ -335,11 +352,11 @@ void convSegments(std::vector<double> & outVector,
      * 
      * Parameters
      * ----------
-     * outVector : vector of floats
+     * outVector : vector of doubles
      *     Resulting segments
-     * inVector : vector of floats
+     * inVector : vector of doubles
      *     The parameters to convert into segments
-     * segConvFactor: float
+     * segConvFactor: double
      *     Conversion factor betwee the user units and path segments
      * multiplyBool : bool
      *     Multiply or divide by the conversion factor
@@ -352,16 +369,16 @@ void convSegments(std::vector<double> & outVector,
   *
   *  Parameters
   *  ----------
-  *  c : float
+  *  c : double
   *      The linear density of base pairs in the chain.
-  *  Lp : float
+  *  Lp : double
   *      The persistence length of the wormlike chain.
-  *  N : float
+  *  N : double
   *      The number of base pairs in the chain.
   *
   *  Returns
   *  -------
-  *  meanRg : float 
+  *  meanRg : double 
   *     The mean gyration radius of a theoretical wormlike chain. */
 
 
