@@ -10,14 +10,18 @@
 #include <string>         // Strings
 #include <vector>         // Vectors for storing data
 #include <random>         // Generating random numbers
+#include <chrono>         // Timing
 #include <stdexcept>      // Throwing exceptions
+#include <fstream>        // Saving/Loading data
 
 #define pi 3.1415926
 
 using namespace std;
 
 // defines engine and distribution for random number generation
-std::default_random_engine randGenerator;
+unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+std::default_random_engine randGenerator(seed);
 std::uniform_real_distribution<double> randUniformReal(0.0,1.0);
 std::normal_distribution<double> randNormalReal(0.0,1.0);
 
@@ -109,6 +113,34 @@ public:
     void makeNewPath();
     /* Clears current path and makes a new one.
      * First point is determined by initPoint. */
+
+    void bumpPoints(double locPrecision);
+    /*   Bumps the points of this chain in a random direction in 3D.
+     *   
+     *   Parameters
+     *   ----------
+     *   locPrecision : double
+     *       The localization precision of the measurement. This is the
+     *       standard deviation of the Gaussian distribution
+     *       determining the bump distances.
+     */
+
+    double computeRg(int dimensions = 3);
+    /* Compute the radius of gyration of a path.
+     *
+     * computeRg() calculates the radius of gyration of the WLC
+     * object. The Rg is returned as a single number.
+     *
+     * Parameters
+     * ----------
+     * dimensions : int
+     *     Compute the two dimensional or three dimensional radius of
+     *     gyration (Default: dimensions = 3)
+     *
+     * Returns
+     * -------
+     * Rg : double
+     *     The radius of gyration of the path object. */
 };
 
 class WormlikeChainDict
@@ -122,18 +154,29 @@ class WormlikeChainDict
  * numSegments: double SHOULD BE VECTOR OF DOUBLE
  *      Number of segments to simulate for each chain iteration
  * locPrecision: double SHOULD ALSO BE VECTOR OF DOUBLES?
- *      localization precision used for bumping the chain locations */
+ *      localization precision used for bumping the chain locations 
+ * linDensity: double
+ *      linear density of the chain
+ * persisLength: double
+ *      persistence length of the chain*/
+
 {
 public:
     
     WormlikeChain * chain;
     double numSegments;
     double locPrecision;
+    double linDensity;
+    double persisLength;
+    double segConvFactor;
 
     // Constructor
     WormlikeChainDict(WormlikeChain * in_chain,
                       double in_numSegments,
-                      double in_locPrecision);
+                      double in_locPrecision,
+                      double in_linDensity,
+                      double in_persisLength,
+                      double in_segConvFactor);
     // Destructor, deletes the WLC instance
     ~WormlikeChainDict();
 };
@@ -146,16 +189,54 @@ class RgDict
  * Rg: <vector> of doubles
  *      Contains gyration radii for the chain
  * RgBump: <vector> of doubles
- *      Contains gyration radii for the sampled version */
+ *      Contains gyration radii for the sampled version 
+ * linDensity: double
+ *      linear density of this chain
+ * persisLength: double
+ *      persistence length of this chain
+ * ALL ARE CONVERTED TO USER DEFINED UNITS UPON CREATION */
 {
 public:
 
     std::vector<double> Rg;
     std::vector<double> RgBump;
+    double linDensity;
+    double persisLength;
+    double segConvFactor;
 
     // Constructor
-    RgDict(std::vector<double> * in_Rg, std::vector<double> * in_RgBump);
+    RgDict(std::vector<double> * in_Rg, std::vector<double> * in_RgBump,
+        double in_linDensity, double in_persisLength, double in_segConvFactor,
+        bool convert = false);
+
+    void addToDBfile(std::ofstream & fileDB);
+    /* Adds the RgDict to database file in following format:
+     * linear density
+     * persistence length
+     * number of paths simulated (N)
+     * N points of Rg doubles
+     * N points of RgBump doubles */
+
+    void readFromDBfile(std::ifstream & fileDB);
+    /* Reads from DB file - NOT IMPLEMENTED YET */
+
 };
+
+vector<RgDict*> * readFromDBfile(std::ifstream & fileDB);
+/* Reads from DB file.
+ *
+ * Returns a pointer to new vector of pointers to RgDict
+ * instances, which are loaded with the data from file.
+ *
+ * Parameters:
+ * -----------
+ * fileDB: std::ifstream instance
+ *      file opened with read privileges, previously created
+ *      by this program
+ *
+ * Returns:
+ * --------
+ * data: pointer to new vector<RgDict*> */
 
 RgDict * parSimChain(WormlikeChainDict * chainDict);
 /*   Pimary processing for-loop to be parallelized.
@@ -179,41 +260,72 @@ RgDict * parSimChain(WormlikeChainDict * chainDict);
   *     radii for the chain and its sampled version.
   */
 
-class Collector
-/* Creates random walk paths and collects their statistics.
+class WLCCollector
+/*   Collector for the wormlike chain.
+ *   Creates random walk paths and collects their statistics.
  * 
- * A Collector generates a user-defined number of random walk paths
- * with possibly different lengths by sending the walk parameters to
- * a Path object. After the path has been generated, the statistics
- * that describe the path are collected and binned into a histogram.
- * 
- * Member variables:
- * -----------------
- * numPaths: int
- *      Number of paths to collect before stopping the simulation
- * pathLength : vector of floats
- *     The length of each simulated path
- * nameDB: string
- *     Name of database
- * segConvFactor : float
- *     Conversion factor between the user units and path segments
- *     (Default is 1.0) */
+ *   A Collector generates a user-defined number of random walk paths
+ *   with possibly different lengths by sending the walk parameters to
+ *   a Path object. After the path has been generated, the statistics
+ *   that describe the path are collected and binned into a histogram.
+ *
+ *   Member variables:
+ *   -----------------
+ *   numPaths : int
+ *       The number of paths to collect before stopping the simulation
+ *   pathLength : vector of floats
+ *       The length of each simulated path in genomic length
+ *   linDensity : vector of floats
+ *       The number of base pairs per user-defined unit of length
+ *   persisLength : vector of floats
+ *       The path's persistence length in user-defined units of length
+ *   segConvFactor : float (optional)
+ *       Conversion factor between the user units and path segments
+ *       (Default is 1.0)
+ *   locPrecision : float (optional)
+ *       Standard deviation of the Gaussian defining the effective
+ *       system PSF. (Default is 0, meaning no bumps are made)
+ *   fullSpecParam : bool (optional)
+ *       Do linDensity and persisLength define all the parameter-space
+ *       points to simulate, or do they instead define the points in a
+ *       grid to be generated with meshgrid? In the first case, the
+ *       number of points to simulate is equal to the length of
+ *       persisLength OR linDensity, whereas in the second case it's
+ *       equal to the number of points in persisLength TIMES the number
+ *       of points in linDensity. (Default is false; the points will
+ *       define a grid in this case).
+ */
 {
 public:
+
     int numPaths;
     std::vector<double> pathLength;
     std::string nameDB;
+    std::ofstream fileDB;
     double segConvFactor;
+    std::vector<double> linDensity;
+    std::vector<double> persisLength;
+    double locPrecision;
+    bool fullSpecParam;
 
-    // Constructor
-    Collector();
+    // Constructor, initializes the variables, opens file for read/write
+    // and starts the collector
+    WLCCollector(int in_numPaths,
+                 std::vector<double> & in_pathLength,
+                 std::vector<double> & in_linDensity,
+                 std::vector<double> & in_persisLength,
+                 std::string in_nameDB,
+                 double in_segConvFactor = 1.0,
+                 double in_locPrecision = 0.0,
+                 bool in_fullSpecParam = false);
 
-    // Constructor, not used
-    Collector(std::vector<double> & in_pathLength, 
-          std::string in_nameDB,
-          double in_segConvFactor = 1.0);
-protected:
-    void convSegments(std::vector<double> & outVector,
+
+    void startCollector();
+    /* Simulates the WLCs and collects the information about them.
+     * Then it saves the information into the specified database */
+};
+
+void convSegments(std::vector<double> & outVector,
                       std::vector<double> & inVector,
                       double convFactor,
                       bool multiplyBool);
@@ -232,92 +344,25 @@ protected:
      * multiplyBool : bool
      *     Multiply or divide by the conversion factor
      */
-};
-
-class WLCCollector: public Collector
-/*   Collector for the wormlike chain.
- *
- *   Member variables:
- *   -----------------
- *   numPaths : int
- *       The number of paths to collect before stopping the simulation
- *   pathLength : vector of floats
- *       The length of each simulated path in genomic length
- *   linDensity : vector of floats
- *       The number of base pairs per user-defined unit of length
- *   persisLength : vector of floats
- *       The path's persistence length in user-defined units of length
- *   segConvFactor : float (optional)
- *       Conversion factor between the user units and path segments
- *       (Default is 1)
- *   locPrecision : float (optional)
- *       Standard deviation of the Gaussian defining the effective
- *       system PSF. (Default is 0, meaning no bumps are made)
- *   fullSpecParam : bool (optional)
- *       Do linDensity and persisLength define all the parameter-space
- *       points to simulate, or do they instead define the points in a
- *       grid to be generated with meshgrid? In the first case, the
- *       number of points to simulate is equal to the length of
- *       persisLength OR linDensity, whereas in the second case it's
- *       equal to the number of points in persisLength TIMES the number
- *       of points in linDensity. (Default is false; the points will
- *       define a grid in this case).
- */
-{
-public:
-    // Constructor, initializes the variables and starts the collector
-    WLCCollector(int in_numPaths,
-                 std::vector<double> & in_pathLength,
-                 std::vector<double> & in_linDensity,
-                 std::vector<double> & in_persisLength,
-                 std::string in_nameDB,
-                 double in_segConvFactor = 1.0,
-                 double in_locPrecision = 0.0,
-                 bool in_fullSpecParam = false);
 
 
-    void startCollector();
-    /* Simulates the WLCs and collects the information about them.
-     * Then it saves the information into the specified database */
 
-    std::vector<double> linDensity;
-    std::vector<double> persisLength;
-    double locPrecision;
-    bool fullSpecParam;
-};
-
-double computeRg(WormlikeChain * chain, int dimensions = 3);
-/* Compute the radius of gyration of a path.
- *
- * computeRg() calculates the radius of gyration of a Path
- * object. The Rg is returned as a single number.
- *
- * Parameters
- * ----------
- * chain : Pointer to WormlikeChain instance
- *     The path is located at chain->path. The radius of gyration is computed
- *     from the endpoints of its individual segments.
- * dimensions : int
- *     Compute the two dimensional or three dimensional radius of
- *     gyration (Default: dimensions = 3)
- *
- * Returns
- * -------
- * Rg : double
- *     The radius of gyration of the path object. */
-
-void bumpPoints(WormlikeChain * chain, double locPrecision);
-/*Bumps the points in a random direction in 3D.
- *   
- *   Parameters
- *   ----------
- *   chain: pointer to WormlikeChain instance to be bumped
- *       This instance of WormlikeChain will have its points bumped
- *   locPrecision : double
- *       The localization precision of the measurement. This is the
- *       standard deviation of the Gaussian distribution
- *       determining the bump distances.
- */
+ double theoreticalWLCRg(double c, double Lp, double N);
+ /* Return the theoretical value for the gyration radius.
+  *
+  *  Parameters
+  *  ----------
+  *  c : float
+  *      The linear density of base pairs in the chain.
+  *  Lp : float
+  *      The persistence length of the wormlike chain.
+  *  N : float
+  *      The number of base pairs in the chain.
+  *
+  *  Returns
+  *  -------
+  *  meanRg : float 
+  *     The mean gyration radius of a theoretical wormlike chain. */
 
 
 

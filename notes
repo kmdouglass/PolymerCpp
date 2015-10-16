@@ -1,5 +1,6 @@
 //command line command
-g++ -std=c++11 -I ./Eigen PolymerCpp.cpp -o ../Debug/PolymerCpp
+~/PolymerCpp/src$ g++ -std=c++11 -I ./Eigen PolymerCpp.cpp -o ../Debug/PolymerCpp -fopenmp
+
 
 // line 403 and 406, why numSegments[0]??
 

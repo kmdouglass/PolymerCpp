@@ -5,11 +5,79 @@
 #include "PolymerCpp.h"
 
 
-RgDict::RgDict(std::vector<double> * in_Rg, std::vector<double> * in_RgBump)
+RgDict::RgDict(std::vector<double> * in_Rg, std::vector<double> * in_RgBump,
+    double in_linDensity, double in_persisLength, double in_segConvFactor,
+    bool convert)
 {
     Rg = *in_Rg;
     RgBump = *in_RgBump;
+    if (convert) {
+        convSegments(Rg, Rg, in_segConvFactor, false);
+        convSegments(RgBump, RgBump, in_segConvFactor, false);
+        linDensity = in_linDensity * in_segConvFactor;
+        persisLength = in_persisLength / in_segConvFactor;
+    }
+    else {
+        linDensity = in_linDensity;
+        persisLength = in_persisLength;
+    }
+    segConvFactor = in_segConvFactor;
 }
+
+void RgDict::addToDBfile(std::ofstream & fileDB)
+{
+    fileDB << linDensity;
+    fileDB << persisLength;
+    fileDB << Rg.size();
+    for (int i=0; i<Rg.size(); i++)
+    {
+        fileDB << Rg[i];
+    }
+    for (int i=0; i<Rg.size(); i++)
+    {
+        fileDB << RgBump[i];
+    }
+}
+
+std::vector<RgDict*> * readFromDBfile(std::ifstream & fileDB)
+{
+    // read vectorSize and segConvFactor
+    int vectorSize; double segConvFactor;
+    fileDB >> vectorSize;
+    fileDB >> segConvFactor;
+
+    // create new vector to hold dicts
+    vector<RgDict*> * data;
+    data = new vector<RgDict*>;
+    // read each vector in file
+    for (int i=0; i<vectorSize; i++)
+    {
+        // load all values
+        float linDensity; float persisLength;
+        fileDB >> linDensity;
+        fileDB >> persisLength;
+        int dictSize;
+        fileDB >> dictSize;
+        vector<double> Rg; vector<double> RgBump;
+        double val;
+        for (int j=0; j<dictSize; j++)
+        {
+            fileDB >> val;
+            Rg.push_back(val);
+        }
+        for (int j=0; j<dictSize; j++)
+        {
+            fileDB >> val;
+            RgBump.push_back(val);
+        }
+        // already in user-defined units - false
+        RgDict * dict = new RgDict(&Rg, &RgBump, linDensity, persisLength,
+                                   segConvFactor, false);
+        data->push_back(dict);
+    }
+    return data;
+}
+
 
 
 Eigen::Vector3d * Path::randPointSphere(int numPoints)
@@ -62,9 +130,9 @@ void WormlikeChain::makePath()
     int numSegInt; double numSegFrac;
     numSegInt = (int)numSegments;
     numSegFrac = numSegments - (double)numSegInt;
-
+    //cout << "numSegFrac = " << numSegFrac << endl;
     // If numSegFrac is not zero, allocates memory also for leftover vector
-    int numSeg = (abs(numSegFrac)>0.001) ? numSegInt : numSegInt-1;
+    int numSeg = (abs(numSegFrac)>0.001) ? numSegInt+1 : numSegInt;
 
     // Create the displacement distances in the tangent planes
     double *angDisp = new double[numSeg];
@@ -95,7 +163,7 @@ void WormlikeChain::makePath()
     Eigen::Vector3d dispVector, nextPoint;
     double projDistance;
     workingPath[0] = currPoint;
-    for (int i=0; i<numSeg; i++)
+    for (int i=1; i<numSeg; i++)
     {
         // Create a displacement in the plane tangent to currPoint
         dispVector = currPoint.cross(randVecs[i]);
@@ -109,7 +177,7 @@ void WormlikeChain::makePath()
         }
 
         // Move the currPoint vector in the tangent plane
-        dispVector = (dispVector / dispVector.squaredNorm()) *
+        dispVector = (dispVector / sqrt(dispVector.squaredNorm())) *
                      tanPlaneDisp[i];
 
         // Back Project new point onto sphere
@@ -141,43 +209,19 @@ void WormlikeChain::makeNewPath()
 }
 
 
-Collector::Collector() { return; }
-
-Collector::Collector(vector<double> & in_pathLength, 
-              string in_nameDB,
-              double in_segConvFactor /*optional*/)
-{
-    numPaths = in_pathLength.size();
-    segConvFactor = in_segConvFactor;
-    nameDB = in_nameDB;
-    convSegments(pathLength, in_pathLength, segConvFactor, true);
-}
-
-void Collector::convSegments(vector<double> & outVector,
-                      vector<double> & inVector,
-                      double convFactor,
-                      bool multiplyBool)
-{
-    for (int i=0; i<outVector.size(); i++)
-    {
-        if (multiplyBool) {
-            outVector[i] = inVector[i] * convFactor;
-        }
-        else {
-            outVector[i] = inVector[i] / convFactor;
-        }
-    }
-    return;
-}
-
-
 WormlikeChainDict::WormlikeChainDict(WormlikeChain * in_chain,
                       double in_numSegments,
-                      double in_locPrecision)
+                      double in_locPrecision,
+                      double in_linDensity,
+                      double in_persisLength,
+                      double in_segConvFactor)
 {
     chain = in_chain;
     numSegments = in_numSegments;
     locPrecision = in_locPrecision;
+    linDensity = in_linDensity;
+    persisLength = in_persisLength;
+    segConvFactor = in_segConvFactor;
 }
 
 WormlikeChainDict::~WormlikeChainDict()
@@ -210,9 +254,27 @@ WLCCollector::WLCCollector(int in_numPaths,
         convSegments(persisLength, in_persisLength, segConvFactor, true);
         locPrecision = in_locPrecision * segConvFactor;
 
+
         // Starts the collector
         startCollector();
     }
+
+void convSegments(vector<double> & outVector,
+                      vector<double> & inVector,
+                      double convFactor,
+                      bool multiplyBool)
+{
+    for (int i=0; i<outVector.size(); i++)
+    {
+        if (multiplyBool) {
+            outVector[i] = inVector[i] * convFactor;
+        }
+        else {
+            outVector[i] = inVector[i] / convFactor;
+        }
+    }
+    return;
+}
 
 void WLCCollector::startCollector()
 {
@@ -247,15 +309,39 @@ void WLCCollector::startCollector()
             new WormlikeChain(numSegments[0], persisLength[i],
                               &startDir);
         myChains.push_back(new WormlikeChainDict(
-            myChain, numSegments[0], locPrecision));
+            myChain, numSegments[0], locPrecision,
+            linDensity[i], persisLength[i], segConvFactor));
     }
     vector<RgDict*> data;
     // Compute the gyration radii for all the parameter pairs
+    #pragma omp parallel for // parallelize the next loop
     for (int i=0; i<myChains.size(); i++) 
     {
         data.push_back(parSimChain(myChains[i]));
     }
+    
     // SAVE THE CALCULATED RgData
+    // Opens or creates the database file for adding simulation results
+    fileDB.open(nameDB + ".txt", ios::out | ios::trunc);
+    if (!fileDB.is_open())
+    {
+        std::stringstream buffer;
+        buffer << "Could not open file: " << nameDB << ".txt" << std::endl;
+        throw std::runtime_error(buffer.str());
+    }
+
+    // adds info about number of RgData objects to be saved
+    fileDB << data.size();
+    fileDB << segConvFactor; // info about conversion factor
+
+    for (auto & dict: data)
+    {
+        dict->addToDBfile(fileDB); // adds each object
+        cout << "Density: " << dict->linDensity << ", Persistence length: "
+             << dict->persisLength << std::endl;
+    }
+    fileDB.close();
+
 }
 
 RgDict * parSimChain(WormlikeChainDict * chainDict)
@@ -279,35 +365,37 @@ RgDict * parSimChain(WormlikeChainDict * chainDict)
         chain->initPoint = randStartDir;
         chain->makeNewPath();
 
-        Rg->at(i) = computeRg(chain, 3 /*dimensions*/);
+        Rg->at(i) = chain->computeRg(3 /*dimensions*/);
         if (abs(locPrecision) > 0.001)
         {
             WormlikeChain * bumpedPath;
-            bumpPoints(chain, locPrecision);
-            RgBump->at(i) = computeRg(chain, 3 /*dimensions*/);
+            chain->bumpPoints(locPrecision);
+            RgBump->at(i) = chain->computeRg(3 /*dimensions*/);
         }
     }
-    RgDict * result = new RgDict(Rg, RgBump);
+    // we want to convert to user defined units - true
+    RgDict * result = new RgDict(Rg, RgBump,
+        chainDict->linDensity, chainDict->persisLength,
+        chainDict->segConvFactor, true); 
     return result;
 }
 
-double computeRg(WormlikeChain * chain, int dimensions /*optional*/)
+double WormlikeChain::computeRg(int dimensions /*optional*/)
 {
-    vector<Eigen::Vector3d> * path = &(chain->path);
     double Rg = 0.0;
     double secondMoments[3] = {0.0, 0.0, 0.0};
     double mean; double variance;
     for (int i=0; i<3; i++) {
         mean = 0.0; variance = 0.0;
-        for (auto & point : *path ) { // iterate over all points in path
+        for (auto & point : path ) { // iterate over all points in path
             mean += point(i);
         }
-        mean = mean / path->size();
+        mean = mean / path.size();
 
-        for (auto & point : *path ) {
+        for (auto & point : path ) {
             variance += (mean-point(i))*(mean-point(i));
         }
-        variance = variance / path->size();
+        variance = variance / path.size();
         secondMoments[i] = variance;
     }
 
@@ -321,15 +409,21 @@ double computeRg(WormlikeChain * chain, int dimensions /*optional*/)
 
 }
 
-void bumpPoints( WormlikeChain * chain, double locPrecision )
+void WormlikeChain::bumpPoints(double locPrecision)
 {
-    vector<Eigen::Vector3d> * oldPath = &(chain->path);
-    for (auto & oldPoint : *oldPath) {
+    for (auto & oldPoint : path) {
         for (int i=0; i<3; i++) {
             oldPoint(i) += locPrecision * randNormalReal(randGenerator);
         }
     }
     return;
+}
+
+double theoreticalWLCRg(double c, double Lp, double N)
+{
+    double Rg2 = (Lp * N / c) / 3 - Lp*Lp + 2 * (Lp*Lp*Lp) / ((N / c)*(N / c)) *
+                  ((N / c) * Lp * (1 - exp(-(N/c)/Lp)));
+    return sqrt(Rg2);
 }
 
 
@@ -366,16 +460,51 @@ string DateClass::GetTime()
 
 int main (int argc, char *argv[])
 {
+    // Test case 1: Print time, test sphere sampling
+    /*
     DateClass DateTimeOnLaunch;  // Get time information for naming the database
     cout << "Today is " << DateTimeOnLaunch.GetDate() << ".\n";
-    Eigen::Vector3d basePoint(8.,6.,5.);
-    WormlikeChain WLC(3.,2.,&basePoint);
+
+    Eigen::Vector3d startPoint(0.0,1.0,0.0);
+    WormlikeChain WLC(1.,1.,&startPoint);
     cout << "Generating 10000 random sphere vectors.\n";
     WLC.points = WLC.randPointSphere(10000);
+
+    double meanX = 0.0, meanY = 0.0, meanZ = 0.0, meanSquare = 0.0;
     for (int i=0; i<10000; i++)
     {
-        printf("%f\t%f\t%f\n",WLC.points[i](0),WLC.points[i](1),
-            WLC.points[i](2));
+        meanX += WLC.points[i](0);
+        meanY += WLC.points[i](1);
+        meanZ += WLC.points[i](2);
+        meanSquare += WLC.points[i](0)*WLC.points[i](0) +
+                     WLC.points[i](1)*WLC.points[i](1) +
+                     WLC.points[i](2)*WLC.points[i](2);
     }
-    cout << "basePoint of WLC is: " << WLC.initPoint;
+    cout << "Mean X,Y,Z: " << meanX << ", " << meanY
+         << ", " << meanZ << std::endl;
+    cout << "Sum of squares of vecors: " << meanSquare << std::endl;
+    */
+
+    //Test case 2: test for vector normalization
+    /*
+    Eigen::Vector3d point(6.3,0.7,-5.6);
+    cout << "Vector: " << point << endl;
+    cout << "Squared norm: " << point.squaredNorm() << endl;
+    point /= sqrt(point.squaredNorm());
+    cout << "Normalized vector: " << point << endl;
+    cout << "Squared norm: " << point.squaredNorm() << endl;
+    */
+
+    // Test case 3: create a single random walk
+    /*
+    Eigen::Vector3d startPoint(0.0,1.0,0.0);
+    WormlikeChain WLC(10.05, 25, &startPoint);
+    WLC.makeNewPath();
+    for (auto & point: WLC.path)
+    {
+        cout << point(0) << ", " << point(1) << ", " << point(2) << endl;
+    }
+    */
+
+    // Test case 4: Create a WLCCollector
 }
