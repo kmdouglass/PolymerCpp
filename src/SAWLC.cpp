@@ -45,42 +45,105 @@ void SAWLC::makePath(double in_pathLength)
     }
 
 	// split numSegments into integer and leftover
-    int numSegInt; double numSegFrac;
-    numSegInt = (int)numSegments;
-    numSegFrac = numSegments - (double)numSegInt;
-    //cout << "numSegFrac = " << numSegFrac << endl;
-    // If numSegFrac is not zero, allocates memory also for leftover vector
-    int numSeg = (abs(numSegFrac)>0.001) ? numSegInt+1 : numSegInt;
+    int numSeg;
+    numSeg = (int)numSegments;
 
     double sigma = pow(2.0 / persisLength, 0.5);
 
     // Primary iterative loop for creating the chain
     Eigen::Vector3d currPoint = initPoint;
-    Eigen::Vector3d * workingPath = new Eigen::Vector3d[numSeg];
-    vector<double> stepWeights(numSeg) = 0.0;
+    vector<Eigen::Vector3d> workingPath, cumulativePath;
+    vector<double> stepWeights(numSeg,0.0);
     Eigen::Vector3d dispVector, nextPoint;
     double projDistance;
-    workingPath[0] = currPoint;
+    workingPath.push_back(currPoint);
+    cumulativePath.push_back(currPoint);
+    vector<int> collisionPositions;
+    double sigma = pow(2.0 / persisLength, 0.5);
+    double angDisp, tanPlaneDisp;
+    Eigen::Vector3d * randVec = NULL;
     for (int i=1; i<numSeg; i++)
     {
     	// compute weight of step by integration over space
-    		//check for possible collisions from other links
-    			//get distance from each link
-    				//if more than linkDiameter, OK
+        getPossibleCollisions(cumulativePath, collisionPositions);
 
-    				//if one less than linkDiameter, get interfering phase space,
-    				//integrate it and subtract from all space
+        stepWeights[i] = getNextStepWeight(cumulativePath, collisionPositions); 
 
-    				//if two less, check if their spaces conflict
-    				//integrate them and subtract from all space
-
-    				//if more than two, get available space and integrate over that 
-
+        getNextStep(workingPath, collisionPositions);
     	// keep generating vectors until you get one which is ok
-
-    	// assign it the weight
-
+        
+        while (true) 
+        {
+            angDisp = sigma * randNormalReal(randGenerator);
+            tanPlaneDisp = sin(angDisp);
+            randVec = randPointSphere();
+            dispVector = randVec.cross(currPoint);
+            dispVector /= sqrt(dispVector.squaredNorm());
+            dispVector = dispVector * tanPlaneDisp;
+            projDistance = 1 - cos(angDisp);
+            nextPoint = ((1 - projDistance) * currPoint) + dispVector;
+            if (!checkCollision(nextPoint, cumulativePath, collisionPositions))
+            {
+                workingPath.push_back(nextPoint);
+                cumulativePath.push_back(nextPoint + cumulativePath.back());
+                currPoint = nextPoint;
+                delete randVec;
+                break;
+            }
+            delete randVec;
+        }
     	// move to next step
 
     }
+}
+
+double SAWLC::getNextStepWeight(vector<Eigen::Vector3d> & cumulativePath,
+                                vector<int> & collisionPositions)
+{
+    // check for possible collisions from other links
+
+    if (collisionPositions.size() == 0)
+        return defaultWeight;
+    else
+        return computeIntegral(cumulativePath, collisionPositions);
+}
+
+void SAWLC::getPossibleCollisions(
+                    vector<Eigen::Vector3d> & cumulativePath,
+                    vector<int> & collisionPositions)
+{
+    collisionPositions.empty();
+    Eigen::Vector3d distanceVector; double distance;
+    Eigen::Vector3d endPoint = cumulativePath.back();
+    for (int i = 0; i < cumulativePath.size()-2; i++)
+    // not iterating over last two points, because they are always
+    // colliding
+    {
+        distanceVector = endPoint - cumulativePath[i];
+        distance = sqrt(distanceVector.squaredNorm());
+        if (distance < (1.0 + linkDiameter))
+        {
+            collisionPositions.push_back(i);
+        }
+    }
+}
+
+bool SAWLC::checkCollision(Eigen::Vector3d nextPoint,
+                           vector<Eigen::Vector3d> & cumulativePath,
+                           vector<int> & collisionPositions)
+{
+    Eigen::Vector3d endPoint = nextPoint + cumulativePath.back();
+    Eigen::Vector3d distanceVector; double distance;
+
+    collisionPositions.push_back(cumulativePath.size() - 2);
+    for (auto & position : collisionPositions)
+    {
+        distanceVector = endPoint - cumulativePath[position];
+        distance = sqrt(distanceVector.squaredNorm());
+        if (distance < (1.0 + linkDiameter))
+            collisionPositions.pop_back();
+            return true;
+    }
+    collisionPositions.pop_back();
+    return false;
 }
