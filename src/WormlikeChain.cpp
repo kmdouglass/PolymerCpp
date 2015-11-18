@@ -1,5 +1,3 @@
-
-
 #include "WormlikeChain.h"
 
 using namespace std;
@@ -8,58 +6,24 @@ extern std::default_random_engine randGenerator;
 extern std::uniform_real_distribution<double> randUniformReal;
 extern std::normal_distribution<double> randNormalReal;
 
-Eigen::Vector3d * Path::randPointSphere(int numPoints)
-{
-    Eigen::Vector3d * points = new Eigen::Vector3d[numPoints];
-    for (int i=0; i<numPoints; i++) {
-        
-        // generate 2 random numbers and transform them into angles
-        double phi = 2 * pi * randUniformReal(randGenerator);
-        double theta = acos(2 * randUniformReal(randGenerator) - 1);
-        
-        // convert to cartesian coordinates and fill vector
-        points[i](0) = cos(phi) * sin(theta);
-        points[i](1) = sin(phi) * sin(theta);
-        points[i](2) = cos(theta);
-    }
-    return points;
-}
-
-Eigen::Vector3d * Path::randPointSphere()
-{
-    Eigen::Vector3d * point = new Eigen::Vector3d;
-	// generate 2 random numbers and transform them into angles
-    double phi = 2 * pi * randUniformReal(randGenerator);
-    double theta = acos(2 * randUniformReal(randGenerator) - 1);
-        
-    // convert to cartesian coordinates and fill vector
-    point[0](0) = cos(phi) * sin(theta);
-    point[0](1) = sin(phi) * sin(theta);
-    point[0](2) = cos(theta);
-
-    return point;
-}
-
 
 WormlikeChain::WormlikeChain(int in_numPaths, vector<double> & in_pathLength, 
                   double in_linDensity, double in_persisLength,
                   double in_segConvFactor, double in_locPrecision, 
-                  Eigen::Vector3d * in_initPoint)
+                  Eigen::Vector3d * in_initPoint) 
+    : Path(in_numPaths, in_pathLength, in_linDensity,
+            in_segConvFactor, in_initPoint)
 {
-    numPaths = in_numPaths;
-    pathLength = in_pathLength;
     locPrecision = in_locPrecision;
-    linDensity = in_linDensity;
     persisLength = in_persisLength;
-    segConvFactor = in_segConvFactor;
-
-    initPoint = *in_initPoint;
-    path.push_back(initPoint);
 }
 
 void WormlikeChain::makePath(double in_pathLength)
 {
-    double numSegments = in_pathLength / linDensity;
+    /* this chunk of code is the same in SAWLC and WLC
+     * but I cant put it to Path:: because it would go out of scope
+     */
+    int numSegments = (int) (in_pathLength / linDensity);
     // check if numSegments is in valid range
     if (numSegments < 1)
     {
@@ -70,43 +34,34 @@ void WormlikeChain::makePath(double in_pathLength)
     }
 
     // split numSegments into integer and leftover
-    int numSegInt; double numSegFrac;
-    numSegInt = (int)numSegments;
-    numSegFrac = numSegments - (double)numSegInt;
-    //cout << "numSegFrac = " << numSegFrac << endl;
-    // If numSegFrac is not zero, allocates memory also for leftover vector
-    int numSeg = (abs(numSegFrac)>0.001) ? numSegInt+1 : numSegInt;
+    // no leftover for the time being
+    int numSeg;
+    numSeg = (int)numSegments;
+
+    double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
+                                             : 999999999.9;
+    Eigen::Vector3d currPoint = initPoint;
+    Eigen::Vector3d dispVector, nextPoint;
+    double projDistance;
 
     // Create the displacement distances in the tangent planes
-    double *angDisp = new double[numSeg];
-    double *tanPlaneDisp = new double[numSeg];
-    double sigma = pow(2.0 / persisLength, 0.5);
-    for (int i=0; i<numSeg; i++)
+    double *angDisp = new double[numSegments];
+    double *tanPlaneDisp = new double[numSegments];
+
+    //since we dont have to check for collisions,
+    //we can pre-generate all required random numbers
+    for (int i=0; i<numSegments; i++)
     {
         angDisp[i] = sigma * randNormalReal(randGenerator);
         tanPlaneDisp[i] = sin(angDisp[i]);
     }
     // Create random vectors uniformly sampled from the unit sphere
     Eigen::Vector3d * randVecs;
-    randVecs = randPointSphere(numSeg); // don't forget to delete after
-
-    // Final small displacement for non-integer numSegments
-    if (abs(numSegFrac) > 0.001)
-    {
-        angDisp[numSeg-1] = pow(persisLength*numSegFrac,0.5) *
-                       randNormalReal(randGenerator);
-        tanPlaneDisp[numSeg-1] = numSegFrac * sin(angDisp[numSeg-1]);
-        randVecs[numSeg-1] = numSegFrac * randVecs[numSeg-1];
-    }
+    randVecs = randPointSphere(numSegments); // don't forget to delete after
 
     // Primary iterative loop for creating the chain
-    Eigen::Vector3d currPoint = initPoint;
-    Eigen::Vector3d * workingPath = new Eigen::Vector3d[numSeg];
-    Eigen::Vector3d dispVector, nextPoint;
-    double projDistance;
-    workingPath[0] = currPoint;
-
-    for (int i=1; i<numSeg; i++)
+    Eigen::Vector3d * workingPath = new Eigen::Vector3d[numSegments];
+    for (int i=1; i<numSegments; i++)
     {
         // Create a displacement in the plane tangent to currPoint
         dispVector = currPoint.cross(randVecs[i]);
@@ -138,11 +93,9 @@ void WormlikeChain::makePath(double in_pathLength)
         currPoint = nextPoint;
     }
 
-
-
     // Add up the vectors in path to create the polymer
     path[0] = workingPath[0];
-    for (int i=1; i<numSeg; i++)
+    for (int i=1; i<numSegments; i++)
     {
         path.push_back(workingPath[i] + path[i-1]);
     }
@@ -151,84 +104,96 @@ void WormlikeChain::makePath(double in_pathLength)
     delete randVecs;
 }
 
-void WormlikeChain::makeNewPath(double in_pathLength)
+
+WLCCollector::WLCCollector(int in_numPaths,
+                 vector<double> & in_pathLength,
+                 vector<double> & in_linDensity,
+                 vector<double> & in_persisLength,
+                 string in_nameDB,
+                 double in_segConvFactor /*optional*/,
+                 double in_locPrecision /*optional*/,
+                 bool in_fullSpecParam /*optional*/)
+    : Collector(in_numPaths, in_pathLength, in_linDensity, in_persisLength,
+                in_nameDB, in_segConvFactor, in_locPrecision, in_fullSpecParam)
 {
-    path.clear();                   //clears existing path
-    path.push_back(initPoint);      //sets first point
-    makePath(in_pathLength);        //creates the path
-}
-
-double WormlikeChain::computeRg()
-{
-    double Rg = 0.0;
-    double secondMoments[3] = {0.0, 0.0, 0.0};
-    double mean; double variance;
-    for (int i=0; i<3; i++) {
-        mean = 0.0; variance = 0.0;
-        for (auto & point : path ) { // iterate over all points in path
-            mean += point(i);
-        }
-        mean = mean / path.size();
-
-        for (auto & point : path ) {
-            variance += (mean-point(i))*(mean-point(i));
-        }
-        variance = variance / path.size();
-        secondMoments[i] = variance;
-    }
-
-
-    Rg = sqrt(secondMoments[0] + secondMoments[1] + secondMoments[2]);
-    return Rg;
-
-}
-
-void WormlikeChain::bumpPoints(double locPrecision)
-{
-    for (auto & oldPoint : path) {
-        for (int i=0; i<3; i++) {
-            oldPoint(i) += locPrecision * randNormalReal(randGenerator);
-        }
-    }
-    return;
-}
-
-RgDict * parSimChain(WormlikeChain * chain)
-{
-    // work copies of variables
-    vector<double> * Rg = new vector<double>(chain->numPaths, 0.0);
-    vector<double> * RgBump = new vector<double>(chain->numPaths, 0.0);
-    for (int i=0; i<chain->numPaths; i++)
+    for (int i=0; i<linDensity.size(); i++)
     {
-        for (int j=0; j<3; j++)
-        {
-            chain->initPoint(j) = randUniformReal(randGenerator) - 0.5;
-            // normalize, otherwise can be too small
-            chain->initPoint /= sqrt(chain->initPoint.squaredNorm());
-        }
-        chain->makeNewPath(chain->pathLength.at(i));
-
-        Rg->at(i) = chain->computeRg();
-        if (abs(chain->locPrecision) > 0.001)
-        {
-            chain->bumpPoints(chain->locPrecision);
-            RgBump->at(i) = chain->computeRg();
-        }
+        Eigen::Vector3d startDir(1.0,0.0,0.0);
+        WormlikeChain * myChain = 
+            new WormlikeChain(numPaths, pathLength, linDensity[i], 
+                    persisLength[i], segConvFactor, locPrecision,
+                    &startDir);
+        myChains.push_back(myChain);
     }
-    // we want to convert to user defined units - true
-    RgDict * result = new RgDict(Rg, RgBump, 
-        chain->pathLength.at(0), chain->linDensity,
-        chain->persisLength, chain->segConvFactor, true); 
-    return result;
 }
 
-double theoreticalWLCRg(double c, double Lp, double N)
+WormlikeChain * WLCCollector::getChainPointer(int i)
 {
-    double Rg2 = (Lp * N / c) / 3 - 
-                    Lp*Lp + 
-                    2 * (Lp*Lp*Lp) / ((N / c)*(N / c)) *
-                  ((N / c) - Lp * (1 - exp(-(N/c)/Lp)));
-    return sqrt(Rg2);
+    return myChains[i];
 }
 
+WLCCollector::~WLCCollector()
+{
+    for (auto & chain: myChains)
+    {
+        delete chain;
+    }
+}
 
+/*void WLCCollector::startCollector()
+{
+    cout << "Starting collector!" << endl;
+    vector<RgDict*> data;
+    // Compute the gyration radii for all the parameter pairs
+    #pragma omp parallel for schedule(static,1) num_threads(4)
+         // parallelize the next loop
+        for (int i=0; i<myChains.size(); i++) 
+        {
+            cout << "Simulation " << i << endl; cout.flush();
+            data.push_back(parSimChain(myChains[i]));
+        }
+    
+    // SAVE THE CALCULATED RgData
+    // Opens or creates the database file for adding simulation results
+
+    // sets maximum output precision
+    fileDB << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+    fileDB.open(nameDB + ".txt", ios::out | ios::trunc);
+    if (!fileDB.is_open())
+    {
+        std::stringstream buffer;
+        buffer << "Could not open file: " << nameDB << ".txt" << std::endl;
+        throw std::runtime_error(buffer.str());
+    }
+
+
+    // adds info about number of RgData objects to be saved
+    fileDB << data.size();
+    fileDB << " " << segConvFactor; // info about conversion factor
+
+    for (auto & dict: data)
+    {
+        dict->addToDBfileFull(fileDB); // adds each object
+        cout << "Density: " << dict->linDensity << ", Persistence length: "
+             << dict->persisLength << std::endl;
+
+        double sumRg = 0, sumRgBump = 0;
+        for (int i=0; i<dict->Rg.size(); i++) {
+            sumRg += dict->Rg.at(i);
+            sumRgBump += dict->RgBump.at(i);
+        }
+        sumRg /= dict->Rg.size(); sumRgBump /= dict->RgBump.size();
+        cout << "   Mean Rg:     " << sumRg << endl;
+        cout << "   Mean RgBump: " << sumRgBump << endl;
+        cout << "   Calculated:  " << theoreticalWLCRg(dict->linDensity,
+                         dict->persisLength, dict->pathLength) << endl;
+    }
+    fileDB.close();
+
+
+    // collect garbage
+    for (auto & chain: myChains) delete chain;
+
+}
+
+*/

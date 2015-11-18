@@ -25,13 +25,14 @@ void convSegments(vector<double> & outVector,
                       double convFactor,
                       bool multiplyBool)
 {
-    for (int i=0; i<outVector.size(); i++)
+    outVector.clear();
+    for (int i=0; i<inVector.size(); i++)
     {
         if (multiplyBool) {
-            outVector[i] = inVector[i] * convFactor;
+            outVector.push_back(inVector[i] * convFactor);
         }
         else {
-            outVector[i] = inVector[i] / convFactor;
+            outVector.push_back(inVector[i] / convFactor);
         }
     }
     return;

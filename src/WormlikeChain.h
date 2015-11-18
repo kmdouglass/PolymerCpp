@@ -13,45 +13,13 @@
 #include <vector>         // Vectors for storing data
 #include <random>         // Generating random numbers
 #include <stdexcept>      // Throwing exceptions
+#include <fstream>        // Saving/Loading data
+#include <limits>         // Limits of data types
+#include <iomanip>        // std::setprecision
 
-#include "Misc.h"
+#include "Path.h"
 #include "RgDict.h"
-using namespace std;
-
-const double pi = 3.1415926;
-
-
-class Path
-{   
-public:
-    int numPaths;
-    vector<double> pathLength;
-    double linDensity;
-    double segConvFactor;
-    Eigen::Vector3d initPoint;
-    Eigen::Vector3d * points;
-    std::vector<Eigen::Vector3d> path;
-
-    Eigen::Vector3d * randPointSphere(int numPoints);
-	Eigen::Vector3d * randPointSphere();
-    /* Randomly select points from the surface of a sphere.
-     * Parameters
-     * ----------
-     * numPoints : int
-     * The number of points to return.
-     *
-     * Returns
-     * -------
-     * points : pointer to array of Eigen::Vector3d of length numPoints
-     *    The x, y, and z coordinates of each point on the sphere.
-     *
-     * References
-     * ----------
-     * [1] Weisstein, Eric W. "Sphere Point Picking." From
-     * MathWorld--A Wolfram Web
-     * Resource. http://mathworld.wolfram.com/SpherePointPicking.html
-     */
-};
+#include "Misc.h"
 
 class WormlikeChain: public Path
 /* A 3D wormlike chain.
@@ -77,8 +45,6 @@ class WormlikeChain: public Path
 
 {
 public:
-    double persisLength;
-    double locPrecision;
 
     WormlikeChain(int in_numPaths, vector<double> & in_pathLength, 
                   double in_linDensity, double in_persisLength,
@@ -116,71 +82,65 @@ public:
      *
      *  Initial point to start polymer is determined by initPoint,
      *  which is set when initializing the class WormlikeChain. */
-
-    void makeNewPath(double pathLength);
-    /* Clears current path and makes a new one.
-     * First point is determined by initPoint. */
-
-    void bumpPoints(double locPrecision);
-    /*   Bumps the points of this chain in a random direction in 3D.
-     *   
-     *   Parameters
-     *   ----------
-     *   locPrecision : double
-     *       The localization precision of the measurement. This is the
-     *       standard deviation of the Gaussian distribution
-     *       determining the bump distances.
-     */
-
-    double computeRg();
-    /* Compute the radius of gyration of a path.
-     *
-     * computeRg() calculates the radius of gyration of the WLC
-     * object. The Rg is returned as a single number.
-     *
-     * Returns
-     * -------
-     * Rg : double
-     *     The radius of gyration of the path object. */
 };
 
-RgDict * parSimChain(WormlikeChain * chain);
-/*   Pimary processing for-loop to be parallelized.
-  * 
-  * parSimChain(data) is the most intensive part of the simulation. It
-  * is a function applied to a WormlikeChain instance and repeatedly
-  * calculates new conformations and gyration radii for those
-  * conformations. Each WormlikeChain instance was defined with a
-  * different persistence length.
-  * 
-  * Parameters
-  * ----------
-  * chainDict : WormlikeChainDicts
-  *     A dictionary which contains information about
-  *     one WormlikeChain instance
-  * 
-  * Returns
-  * -------
-  * RgDict : dictionary class
-  *     Dictionary with Rg and RgBump keys containing the gyration
-  *     radii for the chain and its sampled version.
-  */
 
- double theoreticalWLCRg(double c, double Lp, double N);
- /* Return the theoretical value for the gyration radius.
-  *
-  *  Parameters
-  *  ----------
-  *  c : double
-  *      The linear density of base pairs in the chain.
-  *  Lp : double
-  *      The persistence length of the wormlike chain.
-  *  N : double
-  *      The number of base pairs in the chain.
-  *
-  *  Returns
-  *  -------
-  *  meanRg : double 
-  *     The mean gyration radius of a theoretical wormlike chain. */
+class WLCCollector : public Collector
+/*   Collector for the wormlike chain.
+ *   Creates random walk paths and collects their statistics.
+ * 
+ *   A Collector generates a user-defined number of random walk paths
+ *   with possibly different lengths by sending the walk parameters to
+ *   a Path object. After the path has been generated, the statistics
+ *   that describe the path are collected and binned into a histogram.
+ *
+ *   Member variables:
+ *   -----------------
+ *   numPaths : int
+ *       The number of paths to collect before stopping the simulation
+ *   pathLength : vector of doubles
+ *       The length of each simulated path in genomic length
+ *   linDensity : vector of doubles
+ *       The number of base pairs per user-defined unit of length
+ *   persisLength : vector of doubles
+ *       The path's persistence length in user-defined units of length
+ *   segConvFactor : double (optional)
+ *       Conversion factor between the user units and path segments
+ *       (Default is 1.0)
+ *   locPrecision : double (optional)
+ *       Standard deviation of the Gaussian defining the effective
+ *       system PSF. (Default is 0, meaning no bumps are made)
+ *   fullSpecParam : bool (optional)
+ *       Do linDensity and persisLength define all the parameter-space
+ *       points to simulate, or do they instead define the points in a
+ *       grid to be generated with meshgrid? In the first case, the
+ *       number of points to simulate is equal to the length of
+ *       persisLength OR linDensity, whereas in the second case it's
+ *       equal to the number of points in persisLength TIMES the number
+ *       of points in linDensity. (Default is false; the points will
+ *       define a grid in this case).
+ */
+{
+public:
+    vector<WormlikeChain*> myChains;
+
+    // Constructor, initializes the variables, opens file for read/write
+    // and starts the collector
+    WLCCollector(int in_numPaths,
+                 std::vector<double> & in_pathLength,
+                 std::vector<double> & in_linDensity,
+                 std::vector<double> & in_persisLength,
+                 std::string in_nameDB,
+                 double in_segConvFactor = 1.0,
+                 double in_locPrecision = 0.0,
+                 bool in_fullSpecParam = false);
+
+    ~WLCCollector();
+
+    WormlikeChain * getChainPointer(int i);
+    //void startCollector();
+    /* Simulates the WLCs and collects the information about them.
+     * Then it saves the information into the specified database */
+};
 
 #endif

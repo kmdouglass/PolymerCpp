@@ -9,11 +9,11 @@
 #include <vector>         // Vectors for storing data
 #include <random>         // Generating random numbers
 #include <chrono>         // Timing
-#include <stdexcept>      // Throwing exceptions
 
 using namespace std;
 
-#include "WLCCollector.h"
+#include "WormlikeChain.h"
+#include "SAWLC.h"
 #include "RgDict.h"
 
 #endif

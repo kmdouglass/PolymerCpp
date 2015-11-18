@@ -40,53 +40,32 @@ public:
     double pathLength;
     double linDensity;
     double persisLength;
+    double linkDiameter;
     double segConvFactor;
 
     // Constructor
-    RgDict(std::vector<double> * in_Rg, std::vector<double> * in_RgBump,
+    RgDict(std::vector<double> & in_Rg, std::vector<double> & in_RgBump,
         double in_pathLength, double in_linDensity, double in_persisLength,
-        double in_segConvFactor, bool convert = false);
+        double in_linkDiameter, double in_segConvFactor, bool convert = false);
 
-    void addToDBfile(std::ofstream & fileDB);
+    void addToDBfileFull(std::ofstream & fileDB);
     /* Adds the RgDict to database file in following format:
      * linear density
      * persistence length
+     * link diameter
      * number of paths simulated (N)
      * N points of Rg doubles
      * N points of RgBump doubles */
+     void addToDBfileShort(std::ofstream & fileDB);
+    /* Adds the RgDict to database file in following format:
+     * linear density
+     * persistence length
+     * link diameter
+     * number of paths simulated (N)
+     * mean of Rg
+     * mean of RgBump */
 
-    void readFromDBfile(std::ifstream & fileDB);
-    /* Reads from DB file - NOT IMPLEMENTED YET */
 
 };
-
-vector<RgDict*> * readFromDBfile(std::ifstream & fileDB);
-/* Reads from DB file.
- *
- * Returns a pointer to new vector of pointers to RgDict
- * instances, which are loaded with the data from file.
- *
- * Parameters:
- * -----------
- * fileDB: std::ifstream instance
- *      file opened with read privileges, previously created
- *      by this program
- *
- * Returns:
- * --------
- * data: pointer to new vector<RgDict*> */
-
-vector<RgDict*> * loadModel(vector<string> & dbNameList);
-/* Loads the RgDicts from files.
- *
- * Parameters
- * ----------
- * dbNameList: vector of string
- *      Name(s) of the text files that contain the data
- * 
- * Returns
- * -------
- * data : pointer to vector of pointers to new RgDicts
- */
 
 #endif
