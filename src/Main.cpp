@@ -169,16 +169,16 @@ int main (int argc, char *argv[])
     double segConvFactor = 1.0;
     double locPrecision = 2.45;
     */
-    int numPaths = 5;
-    vector<double> pathLength(numPaths, 30000.0);
-    vector<double> linDensity {15.0, 30, 49};
+    int numPaths = 30000;
+    vector<double> pathLength(numPaths, 15000.0);
+    vector<double> linDensity {30,40, 49};
         //{45.0, 50.0, 55.0};
-    vector<double> persisLength {0, 10, 100, 150};
+    vector<double> persisLength {0, 1, 5};
                                 //35.0, 40.0, 45.0, 50.0, 70.0, 90.0,
                                 //{55.0, 60.0, 65.0, 75.0, 80.0, 85.0,
                                 //    95.0, 100.0, 105.0, 110.0};
     vector<double> linkDiameter {0.02};
-    double segConvFactor = 1.0;
+    double segConvFactor = 2.0;
     double locPrecision = 2.45;
 
 
@@ -203,4 +203,5 @@ int main (int argc, char *argv[])
                              segConvFactor,
                              locPrecision,
                              false);
+    wlcCollector.startCollector();
 }

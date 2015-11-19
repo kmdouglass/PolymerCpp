@@ -54,7 +54,14 @@ void Path::makeNewPath(double in_pathLength)
 {
     path.clear();                   //clears existing path
     path.push_back(initPoint);      //sets first point
-    makePath(in_pathLength);        //creates the path
+    try
+    {
+        makePath(in_pathLength);        //creates the path    
+    }
+    catch (int exception)
+    {
+        makeNewPath(in_pathLength);
+    }
 }
 
 double Path::computeRg()
@@ -142,8 +149,6 @@ Collector::Collector(int in_numPaths,
                  double in_locPrecision /*optional*/,
                  bool in_fullSpecParam /*optional*/)
 {
-	cout << "Calling base collector!" << endl;
-	cout << "First linDensity element is: " << in_linDensity.at(0) << endl;
 	pathLength = in_pathLength;
     linDensity = in_linDensity;
     numPaths = in_numPaths;

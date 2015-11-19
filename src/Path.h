@@ -29,6 +29,10 @@ public:
     double linkDiameter; // set to 0 if not SAWLC
     double locPrecision;
     double persisLength;
+
+
+    double simLinkDiameter;
+    double simPersisLength; 
     Eigen::Vector3d initPoint;
     Eigen::Vector3d * points;
     std::vector<Eigen::Vector3d> path;

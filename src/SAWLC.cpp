@@ -24,6 +24,8 @@ SAWLC::SAWLC(int in_numPaths, vector<double> & in_pathLength,
     persisLength = in_persisLength;
     locPrecision = in_locPrecision;
     linkDiameter = in_linkDiameter;
+    simLinkDiameter = in_linkDiameter * in_linDensity;
+    simPersisLength = in_persisLength;
     defaultWeight = 1.0;
 }
 
@@ -47,7 +49,7 @@ void SAWLC::makePath(double in_pathLength)
     int numSeg;
     numSeg = (int)numSegments;
 
-    double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
+    double sigma = abs(simPersisLength)>0.00001 ? pow(2.0 / simPersisLength, 0.5) 
                                              : 999999999.9;
     Eigen::Vector3d currPoint = initPoint;
     Eigen::Vector3d dispVector, nextPoint;
@@ -94,10 +96,15 @@ void SAWLC::makePath(double in_pathLength)
                 break;
             }
             delete randVec;
-            if (j%1000 == 0)
+            /*if (j%1000 == 0)
             {
                 cout << "Tried new vector 1000 times, something is wrong!"
                     << std::endl; cout.flush(); 
+            }*/
+            if (j%10000 == 0)
+            {
+                cout << "DEAD END" << std::endl; cout.flush();
+                throw 42;
             }
         }
     	// move to next step
@@ -131,7 +138,7 @@ void SAWLC::getPossibleCollisions(
 {
     collisionPositions.clear();
     Eigen::Vector3d distanceVector; double distance;
-    Eigen::Vector3d endPoint = cumulativePath.back();
+    Eigen::Vector3d endPoint = cumulativePath.at(where-1);
 
     
     for (int i = 0; i < where-2; i++)
@@ -139,11 +146,11 @@ void SAWLC::getPossibleCollisions(
     {
         distanceVector = endPoint - cumulativePath[i];
         distance = sqrt(distanceVector.squaredNorm());
-        if (distance < (1.0 + linkDiameter))
+        if (distance < (1.0 + simLinkDiameter))
         {
             collisionPositions.push_back(i);
             /*cout << "Possible collision found at link no. "
-                << cumulativePath.size()-1 << ", with link no. "
+                << where << ", with link no. "
                 << i << std::endl; cout.flush();*/
         }
     }
@@ -171,12 +178,12 @@ bool SAWLC::checkCollision(Eigen::Vector3d nextPoint,
     {
         distanceVector = endPoint - cumulativePath[position];
         distance = sqrt(distanceVector.squaredNorm());
-        if (distance < (linkDiameter))
+        if (distance < (simLinkDiameter))
         {
             /*cout << "Collision averted at link no. "
-                << cumulativePath.size()-1 << std::endl
+                << where-1 << std::endl
                 << "Distance: " << distance << std::endl
-                << "linkDiameter: " << linkDiameter << std::endl; cout.flush();
+                << "simLinkDiameter: " << simLinkDiameter << std::endl; cout.flush();
             */
             return true;
         }

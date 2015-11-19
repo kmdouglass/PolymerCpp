@@ -16,6 +16,7 @@ WormlikeChain::WormlikeChain(int in_numPaths, vector<double> & in_pathLength,
 {
     locPrecision = in_locPrecision;
     persisLength = in_persisLength;
+    simPersisLength = in_persisLength;
 }
 
 void WormlikeChain::makePath(double in_pathLength)
