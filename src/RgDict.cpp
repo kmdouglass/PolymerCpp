@@ -3,11 +3,13 @@
 using namespace std;
 
 RgDict::RgDict(std::vector<double> & in_Rg, std::vector<double> & in_RgBump,
+    std::vector<double> & in_Wt,
     double in_pathLength, double in_linDensity, double in_persisLength, 
     double in_linkDiameter, double in_segConvFactor, bool convert)
 {
     Rg = in_Rg;
     RgBump = in_RgBump;
+    Wt = in_Wt;
     pathLength = in_pathLength;
     if (convert) {
         convSegments(Rg, in_Rg, in_segConvFactor, false);
@@ -33,6 +35,10 @@ void RgDict::addToDBfileFull(std::ofstream & fileDB)
     fileDB << " " << Rg.size() << endl;
     for (int i=0; i<Rg.size(); i++)
     {
+        fileDB << " " << Wt[i];
+    }
+    for (int i=0; i<Rg.size(); i++)
+    {
         fileDB << " " << Rg[i];
     }
     fileDB << endl;
@@ -53,7 +59,7 @@ void RgDict::addToDBfileShort(std::ofstream & fileDB)
     double mean = 0.0;
     for (int i=0; i<Rg.size(); i++)
     {
-        mean += Rg[i];
+        mean += Rg[i]*Wt[i];
         
     }
     mean /= (double)Rg.size();
@@ -62,7 +68,7 @@ void RgDict::addToDBfileShort(std::ofstream & fileDB)
     double meanBump = 0.0;
     for (int i=0; i<Rg.size(); i++)
     {
-        meanBump += RgBump[i];
+        meanBump += RgBump[i]*Wt[i];
     }
     meanBump /= (double)Rg.size();
     fileDB << " " << meanBump << std::endl;

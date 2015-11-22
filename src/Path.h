@@ -30,7 +30,7 @@ public:
     double locPrecision;
     double persisLength;
 
-
+    double chainWeight;
     double simLinkDiameter;
     double simPersisLength; 
     Eigen::Vector3d initPoint;

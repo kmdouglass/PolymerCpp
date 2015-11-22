@@ -31,3 +31,6 @@ and parameters of the simulation are kept.
 
 The WormlikeChain then returns a vector of these RgDicts to the WLCCollector.
 The WLCCollector can then save them or do whatever with them.
+
+
+what does segConvFactor do?

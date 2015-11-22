@@ -40,7 +40,7 @@ void WormlikeChain::makePath(double in_pathLength)
     numSeg = (int)numSegments;
 
     double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
-                                             : 999999999.9;
+                                             : 0.0;
     Eigen::Vector3d currPoint = initPoint;
     Eigen::Vector3d dispVector, nextPoint;
     double projDistance;
@@ -53,7 +53,10 @@ void WormlikeChain::makePath(double in_pathLength)
     //we can pre-generate all required random numbers
     for (int i=0; i<numSegments; i++)
     {
-        angDisp[i] = sigma * randNormalReal(randGenerator);
+        if (sigma>0.001) 
+            angDisp[i] = sigma * randNormalReal(randGenerator);
+        else
+            angDisp[i] = 2*pi*randUniformReal(randGenerator);
         tanPlaneDisp[i] = sin(angDisp[i]);
     }
     // Create random vectors uniformly sampled from the unit sphere

@@ -15,5 +15,6 @@ using namespace std;
 #include "WormlikeChain.h"
 #include "SAWLC.h"
 #include "RgDict.h"
+#include "SAWLC_Rosenbluth.h"
 
 #endif

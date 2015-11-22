@@ -13,20 +13,23 @@ SAWLC::SAWLC(int in_numPaths, vector<double> & in_pathLength,
     : Path(in_numPaths, in_pathLength, in_linDensity,
             in_segConvFactor, in_initPoint)
 {
-	if (1.0/in_linDensity < in_linkDiameter)
+	
+    persisLength = in_persisLength;
+    locPrecision = in_locPrecision;
+    linkDiameter = in_linkDiameter / in_linDensity;
+    simLinkDiameter = in_linkDiameter;
+    simPersisLength = in_persisLength;
+    defaultWeight = 1.0;
+    //cout << "defaultWeight: " << defaultWeight << std::endl;
+
+    if (1.0/linDensity < linkDiameter)
     {
         std::stringstream buffer;
         buffer << "The link diameter is larger than the distance between links. "
-            << std::endl << "Link diameter: " << in_linkDiameter << std::endl
-            << "Distance between links: " << 1.0/in_linDensity << std::endl;
+            << std::endl << "Link diameter: " << linkDiameter << std::endl
+            << "Distance between links: " << 1.0/linDensity << std::endl;
         throw std::out_of_range(buffer.str());
     }
-    persisLength = in_persisLength;
-    locPrecision = in_locPrecision;
-    linkDiameter = in_linkDiameter;
-    simLinkDiameter = in_linkDiameter * in_linDensity;
-    simPersisLength = in_persisLength;
-    defaultWeight = 1.0;
 }
 
 void SAWLC::makePath(double in_pathLength)
@@ -50,7 +53,7 @@ void SAWLC::makePath(double in_pathLength)
     numSeg = (int)numSegments;
 
     double sigma = abs(simPersisLength)>0.00001 ? pow(2.0 / simPersisLength, 0.5) 
-                                             : 999999999.9;
+                                             : 0.0;
     Eigen::Vector3d currPoint = initPoint;
     Eigen::Vector3d dispVector, nextPoint;
     double projDistance;
@@ -71,15 +74,16 @@ void SAWLC::makePath(double in_pathLength)
         getPossibleCollisions(cumulativePath, collisionPositions, i);
 
         stepWeights[i] = getNextStepWeight(cumulativePath, collisionPositions, i);
-        // the second-to-last link is always available for collision,
-        // we ignored it above, we add it now so we dont do it in the loop 
-        collisionPositions.push_back(i-2);
+        //cout << "Step of weight " << i << ": " << stepWeights[i] << std::endl;
         int j = 0;
         while (true)
         // keep generating vectors until you get one which is ok
         {
             j++;
-            angDisp = sigma * randNormalReal(randGenerator);
+            if (sigma>0.00001) 
+                angDisp = sigma * randNormalReal(randGenerator);
+            else
+                angDisp = 2*pi*randUniformReal(randGenerator);
             tanPlaneDisp = sin(angDisp);
             randVec = randPointSphere();
             dispVector = randVec->cross(currPoint);
@@ -103,7 +107,7 @@ void SAWLC::makePath(double in_pathLength)
             }*/
             if (j%10000 == 0)
             {
-                cout << "DEAD END" << std::endl; cout.flush();
+                //cout << "DEAD END" << std::endl; cout.flush();
                 throw 42;
             }
         }
@@ -116,19 +120,28 @@ void SAWLC::makePath(double in_pathLength)
     {
         path.push_back(cumulativePath[i]);
     }
+    double wt = 1.0;
+    for (auto & entry: stepWeights)
+        wt *= entry;
+    chainWeight=wt;
+}
 
+double SAWLC::getDefaultWeight()
+{
+    return 1.0;
+}
+
+double SAWLC::computeIntegral(vector<Eigen::Vector3d> & cumulativePath,
+                       vector<int> & collisionPositions, int where)
+{
+    return 1.0;
 }
 
 double SAWLC::getNextStepWeight(vector<Eigen::Vector3d> & cumulativePath,
                                 vector<int> & collisionPositions,
                                 int where)
 {
-    // check for possible collisions from other links
-
-    if (collisionPositions.size() == 0)
-        return defaultWeight;
-    else
-        return computeIntegral(cumulativePath, collisionPositions, where);
+    return 1.0;
 }
 
 void SAWLC::getPossibleCollisions(
@@ -154,6 +167,9 @@ void SAWLC::getPossibleCollisions(
                 << i << std::endl; cout.flush();*/
         }
     }
+    // the second-to-last link is always available for collision,
+    // we ignored it above, we add it now so we dont do it in the loop
+    collisionPositions.push_back(where-2);
     
     
     /*if (collisionPositions.size() > 0)
@@ -191,11 +207,7 @@ bool SAWLC::checkCollision(Eigen::Vector3d nextPoint,
     return false;
 }
 
-double SAWLC::computeIntegral(vector<Eigen::Vector3d> & cumulativePath,
-                       vector<int> & collisionPositions, int where)
-{
-    return 1.0;
-}
+
 
 
 

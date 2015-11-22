@@ -34,7 +34,7 @@ class RgDict
  * ALL ARE CONVERTED TO USER DEFINED UNITS UPON CREATION */
 {
 public:
-
+    std::vector<double> Wt;
     std::vector<double> Rg;
     std::vector<double> RgBump;
     double pathLength;
@@ -45,6 +45,7 @@ public:
 
     // Constructor
     RgDict(std::vector<double> & in_Rg, std::vector<double> & in_RgBump,
+        std::vector<double> & in_Wt,
         double in_pathLength, double in_linDensity, double in_persisLength,
         double in_linkDiameter, double in_segConvFactor, bool convert = false);
 

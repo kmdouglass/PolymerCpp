@@ -13,6 +13,7 @@ Path::Path(int in_numPaths, vector<double> & in_pathLength,
     linDensity = in_linDensity;
     segConvFactor = in_segConvFactor;
     linkDiameter = 0.0;
+    chainWeight = 1.0;
     initPoint = *in_initPoint;
     path.push_back(initPoint);
 }
@@ -110,6 +111,8 @@ RgDict * Path::parSimChain()
     // work copies of variables
     vector<double> * Rg = new vector<double>(numPaths, 0.0);
     vector<double> * RgBump = new vector<double>(numPaths, 0.0);
+    vector<double> * Wt = new vector<double>(numPaths, 0.0);
+    double weightSum = 0.0;
     for (int i=0; i<numPaths; i++)
     {
         makeNewPath(pathLength.at(i));
@@ -120,9 +123,15 @@ RgDict * Path::parSimChain()
             bumpPoints(locPrecision);
             RgBump->at(i) = computeRg();
         }
+        Wt->at(i) = chainWeight;
+        weightSum += Wt->at(i);
+    }
+    for (int i=0; i<numPaths; i++)
+    {
+        Wt->at(i) /= weightSum;
     }
     // we want to convert to user defined units - true
-    RgDict * result = new RgDict(*Rg, *RgBump, 
+    RgDict * result = new RgDict(*Rg, *RgBump, *Wt,
         pathLength.at(0), linDensity,
         persisLength, linkDiameter, segConvFactor, true);
     return result;
@@ -191,7 +200,7 @@ void Collector::startCollector()
          // parallelize the next loop
         for (int i=0; i<linDensity.size(); i++) 
         {
-            cout << "Simulation " << i << endl; cout.flush();
+            //cout << "Simulation " << i << endl; cout.flush();
             data.push_back(getChainPointer(i)->parSimChain());
         }
     
@@ -216,20 +225,24 @@ void Collector::startCollector()
     for (auto & dict: data)
     {
         dict->addToDBfileFull(fileDB); // adds each object
-        cout << endl << "Density: " << dict->linDensity << ", Persistence length: "
+        /*cout << endl << "Density: " << dict->linDensity << ", Persistence length: "
              << dict->persisLength << std::endl << "Link diameter: "
-             << dict->linkDiameter << std::endl;
+             << dict->linkDiameter << std::endl;*/
 
         double sumRg = 0, sumRgBump = 0;
         for (int i=0; i<dict->Rg.size(); i++) {
-            sumRg += dict->Rg.at(i);
-            sumRgBump += dict->RgBump.at(i);
+            sumRg += dict->Rg.at(i)*dict->Wt.at(i);
+            sumRgBump += dict->RgBump.at(i)*dict->Wt.at(i);
         }
-        sumRg /= dict->Rg.size(); sumRgBump /= dict->RgBump.size();
+        //sumRg /= dict->Rg.size(); sumRgBump /= dict->RgBump.size();
         cout << "   Mean Rg:     " << sumRg << endl;
         cout << "   Mean RgBump: " << sumRgBump << endl;
         cout << "   Calculated:  " << theoreticalWLCRg(dict->linDensity,
                          dict->persisLength, dict->pathLength) << endl;
+
+        /*cout << dict->linkDiameter << " " 
+             << dict->persisLength << " "
+             << sumRg << std::endl; */
     }
     fileDB.close();
 

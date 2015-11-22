@@ -52,7 +52,9 @@ public:
 
 	void makePath(double in_pathLength);
 
-	double getNextStepWeight(vector<Eigen::Vector3d> & cumulativePath,
+  virtual double getDefaultWeight();
+
+	virtual double getNextStepWeight(vector<Eigen::Vector3d> & cumulativePath,
                                 vector<int> & collisionPositions,
                                 int where);
 
@@ -65,7 +67,7 @@ public:
                            vector<int> & collisionPositions,
                            int where);
 
-	double computeIntegral(vector<Eigen::Vector3d> & cumulativePath,
+	virtual double computeIntegral(vector<Eigen::Vector3d> & cumulativePath,
                        vector<int> & collisionPositions,
                        int where);
 };
@@ -94,7 +96,7 @@ public:
     /* Simulates the WLCs and collects the information about them.
      * Then it saves the information into the specified database */
 
-    SAWLC * getChainPointer(int i);
+    virtual SAWLC * getChainPointer(int i);
 };
 
 
