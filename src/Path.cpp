@@ -192,16 +192,15 @@ Path * Collector::getChainPointer(int i) {}
 void Collector::startCollector()
 {
 
-    // Creates a vector of WLC entries, each vector entry is a
-    // WLC instance pointer
-    vector<RgDict*> data;
+
+    vector<RgDict*> data(linDensity.size());
     // Compute the gyration radii for all the parameter pairs
     #pragma omp parallel for schedule(static,1) num_threads(4)
          // parallelize the next loop
         for (int i=0; i<linDensity.size(); i++) 
         {
             //cout << "Simulation " << i << endl; cout.flush();
-            data.push_back(getChainPointer(i)->parSimChain());
+            data.at(i)=getChainPointer(i)->parSimChain();
         }
     
     // SAVE THE CALCULATED RgData
@@ -235,10 +234,10 @@ void Collector::startCollector()
             sumRgBump += dict->RgBump.at(i)*dict->Wt.at(i);
         }
         //sumRg /= dict->Rg.size(); sumRgBump /= dict->RgBump.size();
-        cout << "   Mean Rg:     " << sumRg << endl;
-        cout << "   Mean RgBump: " << sumRgBump << endl;
-        cout << "   Calculated:  " << theoreticalWLCRg(dict->linDensity,
-                         dict->persisLength, dict->pathLength) << endl;
+        //cout << "   Mean Rg:     " << sumRg << endl;
+        cout << /*"   Mean RgBump: " <<*/ sumRgBump << " ";
+        /*cout << "   Calculated:  " << theoreticalWLCRg(dict->linDensity,
+                         dict->persisLength, dict->pathLength) << endl;*/
 
         /*cout << dict->linkDiameter << " " 
              << dict->persisLength << " "

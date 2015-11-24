@@ -207,14 +207,17 @@ int main (int argc, char *argv[])
     wlcCollector.startCollector();*/
 
 
-    int numPaths = 1000;
-    vector<double> pathLength(numPaths, 100.0);
+    int numPaths = 3000;
+    vector<double> pathLength(numPaths, 150.0);
     vector<double> linDensity {1};
-    vector<double> persisLength {0.1};
-    //{0,0.01,0.05,0.1,0.2,0.3,0.4,0.5,0.75,1,2.5,5, 10};
+    vector<double> persisLength {0,0.01,0.03,0.05,0.1,0.15,0.2,0.3,0.4,0.5,
+                                0.75,1,1.25,2.5,5, 10};
     vector<double> linkDiameter {0.95};
     double segConvFactor = 1.0;
     double locPrecision = 1.0;
+    for (auto & i : persisLength)
+        cout << i << " ";
+    cout << std::endl;
     {
         SACollector_Rosenbluth myCollector(numPaths,
                              pathLength,
@@ -226,7 +229,8 @@ int main (int argc, char *argv[])
                              locPrecision,
                              false);
         myCollector.startCollector();
-    }    
+    }
+    cout << std::endl;
     {
         SACollector mySACollector(numPaths,
                              pathLength,
@@ -239,13 +243,14 @@ int main (int argc, char *argv[])
                              false);
         mySACollector.startCollector();
     }
-        /*WLCCollector wlcCollector(numPaths,
+    cout << std::endl;
+        WLCCollector wlcCollector(numPaths,
                              pathLength,
                              linDensity,
                              persisLength,
                              "data8",
                              segConvFactor,
                              locPrecision,
-                             false);*/
-        //wlcCollector.startCollector();
+                             false);
+        wlcCollector.startCollector();
 }
