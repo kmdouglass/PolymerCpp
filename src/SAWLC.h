@@ -44,6 +44,7 @@ class SAWLC: public Path
 {
 public:
 	double defaultWeight;
+  vector<double> collisionBuffer;
 	SAWLC(int in_numPaths, vector<double> & in_pathLength, 
                   double in_linDensity, double in_persisLength,
                   double in_linkDiameter, double in_segConvFactor, 

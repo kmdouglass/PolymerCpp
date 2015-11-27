@@ -16,5 +16,6 @@ using namespace std;
 #include "SAWLC.h"
 #include "RgDict.h"
 #include "SAWLC_Rosenbluth.h"
+#include "Stopwatch.h"
 
 #endif

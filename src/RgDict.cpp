@@ -73,3 +73,25 @@ void RgDict::addToDBfileShort(std::ofstream & fileDB)
     meanBump /= (double)Rg.size();
     fileDB << " " << meanBump << std::endl;
 }
+
+double RgDict::getVariance(bool bumped)
+{
+    // expecting sum of all weights to be 1
+    assert((abs(sum(Wt))<1.02 && abs(sum(Wt))>0.98));
+    
+    double variance = 0.0, meanOfSquare = 0.0, squareOfMean = 0.0;
+    vector<double> * RgPtr;
+    RgPtr = bumped ? &RgBump : &Rg;
+
+    double value;
+    for (int i=0; i<RgPtr->size(); i++)
+    {
+        value = RgPtr->at(i);
+        meanOfSquare += Wt.at(i) * value*value;
+        squareOfMean += Wt.at(i) * value;
+    }
+    squareOfMean = squareOfMean * squareOfMean;
+
+    variance = meanOfSquare - squareOfMean;
+    return variance;
+}

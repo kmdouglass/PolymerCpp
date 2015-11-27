@@ -13,6 +13,7 @@
 #include <fstream>        // Saving/Loading data
 #include <stdexcept>      // Throwing exceptions
 #include <sstream>
+#include <cassert>
 
 #include "Misc.h"
 
@@ -26,7 +27,10 @@ class RgDict
  * Rg: <vector> of doubles
  *      Contains gyration radii for the chain
  * RgBump: <vector> of doubles
- *      Contains gyration radii for the sampled version 
+ *      Contains gyration radii for the sampled version
+ * Wt: <vector> of doubles
+ *      Rosenbluth weights of each chain. If the Rosenbluth
+ *      method isn't used, should be 1.0 for each chain.
  * linDensity: double
  *      linear density of this chain
  * persisLength: double
@@ -54,8 +58,9 @@ public:
      * linear density
      * persistence length
      * link diameter
-     * number of paths simulated (N)
-     * N points of Rg doubles
+     * number of paths simulated (N) \n
+     * N points of Weights \n
+     * N points of Rg doubles \n
      * N points of RgBump doubles */
      void addToDBfileShort(std::ofstream & fileDB);
     /* Adds the RgDict to database file in following format:
@@ -66,6 +71,12 @@ public:
      * mean of Rg
      * mean of RgBump */
 
+    double getVariance(bool bumped);
+    /* Returns variance of gyration radii
+     * bumped = true -> uses RgBump
+     * bumped = false -> uses Rg
+     * The variance uses weighted averages
+     */
 
 };
 

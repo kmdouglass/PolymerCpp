@@ -195,7 +195,7 @@ void Collector::startCollector()
 
     vector<RgDict*> data(linDensity.size());
     // Compute the gyration radii for all the parameter pairs
-    #pragma omp parallel for schedule(static,1) num_threads(4)
+    #pragma omp parallel for schedule(dynamic,1)
          // parallelize the next loop
         for (int i=0; i<linDensity.size(); i++) 
         {
@@ -206,8 +206,9 @@ void Collector::startCollector()
     // SAVE THE CALCULATED RgData
     // Opens or creates the database file for adding simulation results
 
-    // sets maximum output precision
-    fileDB << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+    // next line can be used to set maximum precision, but that should not be
+    // necessary
+    // fileDB << std::setprecision(std::numeric_limits<double>::digits10 + 1);
     fileDB.open(nameDB + ".txt", ios::out | ios::trunc);
     if (!fileDB.is_open())
     {
@@ -227,18 +228,17 @@ void Collector::startCollector()
         /*cout << endl << "Density: " << dict->linDensity << ", Persistence length: "
              << dict->persisLength << std::endl << "Link diameter: "
              << dict->linkDiameter << std::endl;*/
-
+        //* SWITCH
         double sumRg = 0, sumRgBump = 0;
         for (int i=0; i<dict->Rg.size(); i++) {
             sumRg += dict->Rg.at(i)*dict->Wt.at(i);
             sumRgBump += dict->RgBump.at(i)*dict->Wt.at(i);
         }
-        //sumRg /= dict->Rg.size(); sumRgBump /= dict->RgBump.size();
-        //cout << "   Mean Rg:     " << sumRg << endl;
-        cout << /*"   Mean RgBump: " <<*/ sumRgBump << " ";
-        /*cout << "   Calculated:  " << theoreticalWLCRg(dict->linDensity,
-                         dict->persisLength, dict->pathLength) << endl;*/
-
+        /*cout << "   Mean Rg:     " << sumRg << endl;
+        cout << /*"   Mean RgBump: " << sumRgBump << " ";
+        cout << "   Calculated:  " << theoreticalWLCRg(dict->linDensity,
+                         dict->persisLength, dict->pathLength) << endl;
+        //*/
         /*cout << dict->linkDiameter << " " 
              << dict->persisLength << " "
              << sumRg << std::endl; */

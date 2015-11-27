@@ -37,3 +37,11 @@ void convSegments(vector<double> & outVector,
     }
     return;
 }
+
+double sum(vector<double> & vect)
+{
+    double result = 0.0;
+    for (auto & val: vect)
+        result += val;
+    return result;
+}

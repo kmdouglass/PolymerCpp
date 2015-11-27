@@ -39,11 +39,12 @@ void SAWLC::makePath(double in_pathLength)
      */
     int numSegments = (int) (in_pathLength / linDensity);
     // check if numSegments is in valid range
-    if (numSegments < 1)
+    if (numSegments < 3)
     {
         std::stringstream buffer;
-        buffer << "The number of segments must be greater than 1, but a "
-            << "value of " << numSegments << "was supplied." << std::endl;
+        buffer << "The number of segments must be greater than 3, but a "
+            << "value of " << numSegments << "was supplied. "
+            << "Why would you want such a short chain anyways?" << std::endl;
         throw std::out_of_range(buffer.str());
     }
 

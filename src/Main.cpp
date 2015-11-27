@@ -14,10 +14,7 @@ extern std::normal_distribution<double> randNormalReal;
 int main (int argc, char *argv[])
 {
     seedRandom();
-    // Test case 1: Print time, test sphere sampling
-    /*
-    DateClass DateTimeOnLaunch;  // Get time information for naming the database
-    cout << "Today is " << DateTimeOnLaunch.GetDate() << ".\n";
+    /* SWITCH: Test case 1: Test sphere sampling
 
     Eigen::Vector3d startPoint(0.0,1.0,0.0);
     WormlikeChain WLC(1.,1.,&startPoint);
@@ -37,20 +34,18 @@ int main (int argc, char *argv[])
     cout << "Sum of X,Y,Z: " << sumX << ", " << sumY
          << ", " << sumZ << std::endl;
     cout << "Sum of squares of vecors: " << sumSquare << std::endl;
-    */
+    //*/
 
-    //Test case 2: test for vector normalization
-    /*
+    /* SWITCH: Test case 2: test for vector normalization
     Eigen::Vector3d point(6.3,0.7,-5.6);
     cout << "Vector: " << point << endl;
     cout << "Squared norm: " << point.squaredNorm() << endl;
     point /= sqrt(point.squaredNorm());
     cout << "Normalized vector: " << point << endl;
     cout << "Squared norm: " << point.squaredNorm() << endl;
-    */
+    //*/
 
-    // Test case 3: create a single random walk
-    /*
+    /* SWITCH: Test case 3: create a single random walk
     Eigen::Vector3d startPoint(0.0,1.0,0.0);
     WormlikeChain WLC(10.05, 25, &startPoint);
     WLC.makeNewPath();
@@ -58,11 +53,10 @@ int main (int argc, char *argv[])
     {
         cout << point(0) << ", " << point(1) << ", " << point(2) << endl;
     }
-    */
+    //*/
 
-    // Test case 4: Create a WLCCollector,
-    //              see if computed Rg matches theory
-    /*
+    /* SWITCH: Test case 4: Create a WLCCollector,
+               see if computed Rg matches theory
     int numPaths; double input;
     cout << "Enter numPaths: ";
     cin >> numPaths;
@@ -91,10 +85,10 @@ int main (int argc, char *argv[])
                              segConvFactor,
                              2.12,
                              false);
-    
-*/
-    // Test case 5: Create a single SAWLC
-    /*vector<double> pathLength(1000,10000.0);
+    //*/
+
+    /* SWITCH: Test case 5: Create a single SAWLC
+    vector<double> pathLength(1000,10000.0);
 
     Eigen::Vector3d startPoint(0.0,1.0,0.0);
     SAWLC selfAvoidingWLC(1000,
@@ -110,11 +104,11 @@ int main (int argc, char *argv[])
     {
         cout << point(0) << ", " << point(1) << ", " << point(2) << endl;
     }
-    */
+    //*/
 
-    // Test case 6: Create a SACollector,
-    //              see if computed Rg matches theory
-    /*
+    /* SWITCH: Test case 6: Create a SACollector,
+               see if computed Rg matches theory
+
     int numPaths; double input;
     cout << "Enter numPaths: ";
     cin >> numPaths;
@@ -153,23 +147,10 @@ int main (int argc, char *argv[])
                              2.12,
                              false);
     myCollector.startCollector();
-*/
-    // Generating simulated data
-    /*int numPaths = 20000;
-    vector<double> pathLength(20000, 12000.0);
-    vector<double> linDensity {5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.5, 
-                            15.0, 17.5, 20.0, 22.5, 25.0, 30.0, 35.0, 40.0};
-        //{45.0, 50.0, 55.0};
-    vector<double> persisLength {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0,
-                                 10.0, 11.0, 13.0, 15.0, 17.5, 20.0, 25.0, 30.0};
-                                //35.0, 40.0, 45.0, 50.0, 70.0, 90.0,
-                                //{55.0, 60.0, 65.0, 75.0, 80.0, 85.0,
-                                //    95.0, 100.0, 105.0, 110.0};
-    vector<double> linkDiameter {0.02};
-    double segConvFactor = 1.0;
-    double locPrecision = 2.45;
-    */
-    /*int numPaths = 20000;
+    //*/
+
+    /* SWITCH: Actual computation algorithm.
+    int numPaths = 20000;
     vector<double> pathLength(numPaths, 12000.0);
     vector<double> linDensity {5,7.5,10,12.5,15,20,25,30,35,40,50};
         //{45.0, 50.0, 55.0};
@@ -204,34 +185,85 @@ int main (int argc, char *argv[])
                              segConvFactor,
                              locPrecision,
                              false);
-    wlcCollector.startCollector();*/
+    wlcCollector.startCollector();
+    //*/
 
-
-    int numPaths = 3000;
+    /* SWITCH: Comparing resulting gyration radii for different algorithms
+    //           with dependence on persistence length
+    int numPaths = 2000;
     vector<double> pathLength(numPaths, 150.0);
     vector<double> linDensity {1};
     vector<double> persisLength {0,0.01,0.03,0.05,0.1,0.15,0.2,0.3,0.4,0.5,
-                                0.75,1,1.25,2.5,5, 10};
-    vector<double> linkDiameter {0.95};
+                                0.75,1,1.25,2.5,4,6,8,10};
+    //vector<double> linkDiameter {0.95};
     double segConvFactor = 1.0;
     double locPrecision = 1.0;
-    for (auto & i : persisLength)
-        cout << i << " ";
-    cout << std::endl;
+    for (double lD=0.1; lD<1.0; lD+=0.4)
     {
-        SACollector_Rosenbluth myCollector(numPaths,
-                             pathLength,
-                             linDensity,
-                             persisLength,
-                             linkDiameter,
-                             "dataSA8",
-                             segConvFactor,
-                             locPrecision,
-                             false);
-        myCollector.startCollector();
+        vector<double> linkDiameter {lD};
+        cout << lD << std::endl;
+        for (auto & i : persisLength)
+            cout << i << " ";
+        cout << std::endl;
+        {
+            SACollector_Rosenbluth myCollector(numPaths,
+                                 pathLength,
+                                 linDensity,
+                                 persisLength,
+                                 linkDiameter,
+                                 "dataSA8",
+                                 segConvFactor,
+                                 locPrecision,
+                                 false);
+            myCollector.startCollector();
+        }
+        cout << std::endl;
+        {
+            SACollector mySACollector(numPaths,
+                                 pathLength,
+                                 linDensity,
+                                 persisLength,
+                                 linkDiameter,
+                                 "dataSA8",
+                                 segConvFactor,
+                                 locPrecision,
+                                 false);
+            mySACollector.startCollector();
+        }
+        cout << std::endl;
+            WLCCollector wlcCollector(numPaths,
+                                 pathLength,
+                                 linDensity,
+                                 persisLength,
+                                 "data8",
+                                 segConvFactor,
+                                 locPrecision,
+                                 false);
+            wlcCollector.startCollector();
+        cout << std::endl;
+        for (auto & chainptr: wlcCollector.myChains)
+            cout << chainptr->getTheoreticalRg() << " ";
+        cout << std::endl << std::endl;
     }
-    cout << std::endl;
+    //*/
+
+    /* SWITCH: Profiling computation time in dependence on pathLength
+    Stopwatch swatch; swatch.set_mode(REAL_TIME);
+    int numPaths = 5000;
+    vector<double> linDensity {1};
+    vector<double> persisLength {10};
+    vector<double> linkDiameter {0.5};   
+    double segConvFactor = 1.0;
+    double locPrecision = 1.0;
+
+    vector<double> pathLengths = {3, 10, 100, 200, 500, 1000, 1500, 2000, 2500,
+                                3000, 5000, 7000, 10000, 13000, 15000};
+    for (auto & pL : pathLengths)
     {
+        cout << pL << " ";
+        swatch.start("sw");
+        vector<double> pathLength(numPaths, pL);
+
         SACollector mySACollector(numPaths,
                              pathLength,
                              linDensity,
@@ -242,8 +274,43 @@ int main (int argc, char *argv[])
                              locPrecision,
                              false);
         mySACollector.startCollector();
+        swatch.stop("sw");
+        cout << swatch.get_total_time("sw") << std::endl;
     }
-    cout << std::endl;
+    //*/
+
+
+    /* SWITCH: Profiling computation time in dependence on persisLength
+    Stopwatch swatch; swatch.set_mode(REAL_TIME);
+    int numPaths = 5000;
+    vector<double> linDensity {1};
+    vector<double> persisLengths = {0,0.01,0.03,0.05,0.1,0.15,0.2,0.3,0.4,0.5,
+                                0.75,1,1.25,2.5,4,6};
+    vector<double> linkDiameter {0.5};
+    double segConvFactor = 1.0;
+    double locPrecision = 1.0;
+    vector<double> pathLength(numPaths,3000);
+    for (auto & pL : persisLengths)
+    {
+        cout << pL << " ";
+        swatch.start("sw");
+        vector<double> persisLength = {pL};
+
+        SACollector mySACollector(numPaths,
+                             pathLength,
+                             linDensity,
+                             persisLength,
+                             linkDiameter,
+                             "dataSA8",
+                             segConvFactor,
+                             locPrecision,
+                             false);
+        mySACollector.startCollector();
+        swatch.stop("sw");
+        cout << swatch.get_total_time("sw") << " ";
+
+        swatch.reset("sw");
+        swatch.start("sw");
         WLCCollector wlcCollector(numPaths,
                              pathLength,
                              linDensity,
@@ -253,4 +320,32 @@ int main (int argc, char *argv[])
                              locPrecision,
                              false);
         wlcCollector.startCollector();
+        swatch.stop("sw");
+        cout << swatch.get_total_time("sw") << std::endl;
+        swatch.reset("sw");
+    }
+    //*/
+
+    //* SWITCH: Profiling computation time opposed to Python simulation
+    Stopwatch swatch; swatch.set_mode(REAL_TIME);
+    int numPaths = 5000;
+    vector<double> linDensity {1};
+    vector<double> persisLength = {10};
+    vector<double> linkDiameter {0.5};
+    double segConvFactor = 1.0;
+    double locPrecision = 1.0;
+    vector<double> pathLength(numPaths,25000);
+    swatch.start("sw");
+    WLCCollector myWLCCollector(numPaths,
+                         pathLength,
+                         linDensity,
+                         persisLength,
+                         "dataSA8",
+                         segConvFactor,
+                         locPrecision,
+                         false);
+    myWLCCollector.startCollector();
+    swatch.stop("sw");
+    cout << swatch.get_total_time("sw") << " ";
+    //*/
 }

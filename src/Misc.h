@@ -18,7 +18,6 @@ using namespace std;
 
 void seedRandom();
 void printRandom();
-// defines engine and distribution for random number generation
 
 
 
@@ -42,4 +41,7 @@ void convSegments(std::vector<double> & outVector,
      *     Multiply or divide by the conversion factor
      */
 
+
+double sum(vector<double> & vect);
+    /* Sums components of vector. */
 #endif

@@ -82,6 +82,8 @@ public:
      *
      *  Initial point to start polymer is determined by initPoint,
      *  which is set when initializing the class WormlikeChain. */
+
+    double getTheoreticalRg();
 };
 
 
