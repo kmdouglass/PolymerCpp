@@ -33,10 +33,11 @@ void RgDict::addToDBfileFull(std::ofstream & fileDB)
     fileDB << " " << persisLength;
     fileDB << " " << linkDiameter;
     fileDB << " " << Rg.size() << endl;
+    /* SWITCH if you want weights in outpus
     for (int i=0; i<Rg.size(); i++)
     {
         fileDB << " " << Wt[i];
-    }
+    } //*/
     for (int i=0; i<Rg.size(); i++)
     {
         fileDB << " " << Rg[i];

@@ -326,21 +326,53 @@ int main (int argc, char *argv[])
     }
     //*/
 
-    //* SWITCH: Profiling computation time opposed to Python simulation
+
     Stopwatch swatch; swatch.set_mode(REAL_TIME);
-    int numPaths = 5000;
-    vector<double> linDensity {1};
-    vector<double> persisLength = {10};
-    vector<double> linkDiameter {0.5};
-    double segConvFactor = 1.0;
-    double locPrecision = 1.0;
-    vector<double> pathLength(numPaths,25000);
+    int numPaths = 150000;
+
+    /* data1, data1SA
+    vector<double> linDensity {2.5, 7.5, 12.5};
+    vector<double> persisLength = {2.5, 7.5, 12.5};
+    for (double i = 5.0; i<60.0; i+=5.0)
+    {
+        linDensity.push_back(i);
+        persisLength.push_back(i);
+    }
+    //*/
+
+    //* data2, data2SA
+    vector<double> linDensity {2.5, 7.5, 12.5};
+    vector<double> persisLength = {0, 60, 65, 70, 75, 80};
+    for (double i = 5.0; i<60.0; i+=5.0)
+    {
+        linDensity.push_back(i);
+    }
+    //*/    
+
+    vector<double> linkDiameter {11.0};
+    double segConvFactor = 1.0/13.0;
+    double locPrecision = 15.0;
+    vector<double> pathLength(numPaths,11000);
+    for (int j=0; j<4; j++)
+        for (int i=0; i<pathLength.size(); i++)
+            pathLength[i] += 2000*(randUniformReal(randGenerator)-0.5);
     swatch.start("sw");
+    SACollector myCollector(numPaths,
+                         pathLength,
+                         linDensity,
+                         persisLength,
+                         linkDiameter,
+                         "data2SA",
+                         segConvFactor,
+                         locPrecision,
+                         false);
+    myCollector.startCollector();
+
     WLCCollector myWLCCollector(numPaths,
                          pathLength,
                          linDensity,
                          persisLength,
-                         "dataSA8",
+                         "data2",
                          segConvFactor,
                          locPrecision,
                          false);

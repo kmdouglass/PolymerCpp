@@ -44,7 +44,7 @@ class SAWLC: public Path
 {
 public:
 	double defaultWeight;
-  vector<double> collisionBuffer;
+  vector<int> collisionBuffer;
 	SAWLC(int in_numPaths, vector<double> & in_pathLength, 
                   double in_linDensity, double in_persisLength,
                   double in_linkDiameter, double in_segConvFactor, 
@@ -63,7 +63,7 @@ public:
                     vector<int> & collisionPositions,
                     int where);
 
-	bool checkCollision(Eigen::Vector3d nextPoint,
+	bool checkCollision(Eigen::Vector3d * nextPoint,
                            vector<Eigen::Vector3d> & cumulativePath,
                            vector<int> & collisionPositions,
                            int where);
@@ -71,6 +71,8 @@ public:
 	virtual double computeIntegral(vector<Eigen::Vector3d> & cumulativePath,
                        vector<int> & collisionPositions,
                        int where);
+
+  void reloadBuffer(vector<Eigen::Vector3d> & cumulativePath, int where);
 };
 
 

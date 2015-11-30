@@ -24,7 +24,7 @@ double SAWLC_Rosenbluth::getDefaultWeight()
     currPoint = basicPath[1];
     vector<int> collisions(1,0);
 
-    double sigma = abs(simPersisLength)>0.00001 ? pow(2.0 / simPersisLength, 0.5) 
+    double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
                                              : 0.0;
 
     Eigen::Vector3d dispVector;
@@ -45,7 +45,7 @@ double SAWLC_Rosenbluth::getDefaultWeight()
         dispVector = dispVector * tanPlaneDisp;
         projDistance = 1 - cos(angDisp);
         nextPoint = ((1 - projDistance) * currPoint) + dispVector;
-        if (!checkCollision(nextPoint, basicPath, collisions, 2))
+        if (!checkCollision(&nextPoint, basicPath, collisions, 2))
             passed++;
     }
     delete randVecs;
@@ -56,7 +56,7 @@ double SAWLC_Rosenbluth::computeIntegral(vector<Eigen::Vector3d> & cumulativePat
                        vector<int> & collisionPositions, int where)
 {
     Eigen::Vector3d nextPoint, currPoint;
-    double sigma = abs(simPersisLength)>0.00001 ? pow(2.0 / simPersisLength, 0.5) 
+    double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
                                              : 0.0;
     Eigen::Vector3d dispVector;
     double projDistance;
@@ -77,7 +77,7 @@ double SAWLC_Rosenbluth::computeIntegral(vector<Eigen::Vector3d> & cumulativePat
         dispVector = dispVector * tanPlaneDisp;
         projDistance = 1 - cos(angDisp);
         nextPoint = ((1 - projDistance) * currPoint) + dispVector;
-        if (!checkCollision(nextPoint, cumulativePath, 
+        if (!checkCollision(&nextPoint, cumulativePath, 
                             collisionPositions, where))
             passed++;
     }

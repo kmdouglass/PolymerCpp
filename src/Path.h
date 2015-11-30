@@ -31,8 +31,6 @@ public:
     double persisLength;
 
     double chainWeight;
-    double simLinkDiameter;
-    double simPersisLength; 
     Eigen::Vector3d initPoint;
     Eigen::Vector3d * points;
     std::vector<Eigen::Vector3d> path;
