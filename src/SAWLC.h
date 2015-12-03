@@ -22,29 +22,10 @@ using namespace std;
 
 class SAWLC: public Path
 /* A self-avoiding wormlike chain
- * 
- * Member variables:
- * -----------------
- * numPaths: int
- *     number of paths to be simulated
- * pathLength: vector<double> of length numPaths
- *     for each path contains its genomic length
- * linDensity: double
- *      linear density of the chain 
- * persisLength: double
- *     The persistence length in units of chain segments.
- * linkDiameter: double
- * 	   The diameter of a link
- * initPoint : pointer to Eigen::Vector3d
- *     The coordinates of the first point of the chain.
- * path : <vector> of Eigen::Vector3d points
- *     vector, whose elements are 3d vectors describing
- *     endpoints of the segments comprising the path
  */
 {
 public:
-	double defaultWeight;
-  vector<int> collisionBuffer;
+	double defaultWeight; // always 1 in case of SAWLC
 	SAWLC(int in_numPaths, vector<double> & in_pathLength, 
                   double in_linDensity, double in_persisLength,
                   double in_linkDiameter, double in_segConvFactor, 
@@ -52,27 +33,35 @@ public:
 	/* Constructor */
 
 	void makePath(double in_pathLength);
+  // Simulates one instance of the path with length in_pathLength.
 
   virtual double getDefaultWeight();
+  // SAWLC always has weight 1.
 
 	virtual double getNextStepWeight(vector<Eigen::Vector3d> & cumulativePath,
                                 vector<int> & collisionPositions,
                                 int where);
+  // SAWLC always has weight 1.
 
 	void getPossibleCollisions(vector<Eigen::Vector3d> & cumulativePath,
                     vector<int> & collisionPositions,
                     int where);
+  /* Scans the already generated part of chain for possible collisions
+   * with next step - calculates maximal extent of the excluded volume
+   * sphere in next step and adds the index numbers of all points that
+   * are closer than that extent to the current end of chain.       */
 
 	bool checkCollision(Eigen::Vector3d * nextPoint,
                            vector<Eigen::Vector3d> & cumulativePath,
                            vector<int> & collisionPositions,
                            int where);
+  /* Checks if the generated new step collides with some of the candidates
+   * which were identified by getPossibleCollisions. */
 
 	virtual double computeIntegral(vector<Eigen::Vector3d> & cumulativePath,
                        vector<int> & collisionPositions,
                        int where);
-
-  void reloadBuffer(vector<Eigen::Vector3d> & cumulativePath, int where);
+  // SAWLC always has weight 1.
 };
 
 
@@ -81,7 +70,7 @@ class SACollector : public Collector
 public:
     vector<SAWLC*> myChains;
     // Constructor, initializes the variables, opens file for read/write
-    // and starts the collector
+    // but doesn't start it.
     SACollector(int in_numPaths,
                  std::vector<double> & in_pathLength,
                  std::vector<double> & in_linDensity,
@@ -93,13 +82,11 @@ public:
                  bool in_fullSpecParam = false);
 
     ~SACollector();
-
-
-    //void startCollector();
-    /* Simulates the WLCs and collects the information about them.
-     * Then it saves the information into the specified database */
+    // Destructor, collects garbage.
 
     virtual SAWLC * getChainPointer(int i);
+    // Returns pointer to the i-th chain in its index so it can be simulated
+    // and its properties calculated and saved.
 };
 
 

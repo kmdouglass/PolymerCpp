@@ -30,12 +30,10 @@ class RgDict
  *      Contains gyration radii for the sampled version
  * Wt: <vector> of doubles
  *      Rosenbluth weights of each chain. If the Rosenbluth
- *      method isn't used, should be 1.0 for each chain.
- * linDensity: double
- *      linear density of this chain
- * persisLength: double
- *      persistence length of this chain
- * ALL ARE CONVERTED TO USER DEFINED UNITS UPON CREATION */
+ *      method isn't used, should be equal for each chain,
+ *      with the sum of all weights equal to one.
+ * other: parameters of this particular simulation
+ */
 {
 public:
     std::vector<double> Wt;
@@ -55,19 +53,14 @@ public:
 
     void addToDBfileFull(std::ofstream & fileDB);
     /* Adds the RgDict to database file in following format:
-     * linear density
-     * persistence length
-     * link diameter
+     * path length, linear density, persistence length, link diameter, 
      * number of paths simulated (N) \n
-     * N points of Weights \n
      * N points of Rg doubles \n
-     * N points of RgBump doubles */
+     * N points of RgBump doubles \n*/
      void addToDBfileShort(std::ofstream & fileDB);
     /* Adds the RgDict to database file in following format:
-     * linear density
-     * persistence length
-     * link diameter
-     * number of paths simulated (N)
+     * path length, linear density, persistence length, link diameter, 
+     * number of paths simulated (N) \n
      * mean of Rg
      * mean of RgBump */
 

@@ -30,7 +30,7 @@ public:
     double locPrecision;
     double persisLength;
 
-    double chainWeight;
+    double chainWeight; // set to 1 if not Rosenbluth
     Eigen::Vector3d initPoint;
     Eigen::Vector3d * points;
     std::vector<Eigen::Vector3d> path;
@@ -90,17 +90,12 @@ public:
     virtual void makePath(double);
 
     RgDict * parSimChain();
- /*   Pimary processing for-loop to be parallelized.
+ /* Pimary processing for-loop to be parallelized.
   * 
   * parSimChain(data) is the most intensive part of the simulation. It
-  * is a function applied to a WormlikeChain instance and repeatedly
+  * is a function applied to a Path instance and repeatedly
   * calculates new conformations and gyration radii for those
-  * conformations. Each WormlikeChain instance was defined with a
-  * different persistence length.
-  * 
-  * Parameters
-  * ----------
-  * chain: Path instance (WLC or SAWLC)
+  * conformations.
   * 
   * Returns
   * -------
@@ -135,8 +130,8 @@ class Collector
 public:
 	int numPaths;
     std::vector<double> pathLength;
-    std::string nameDB;
-    std::ofstream fileDB;
+    std::string nameDB; // name of output file
+    std::ofstream fileDB; // stream to output file
     double segConvFactor;
     std::vector<double> linDensity;
     std::vector<double> persisLength;
@@ -153,9 +148,15 @@ public:
               double in_segConvFactor = 1.0,
               double in_locPrecision = 0.0,
               bool in_fullSpecParam = false);
+    /* Initializes the collector - loads all values to member variables. */
 
     void startCollector();
+    /* Runs the simulation and saves results to the "nameDB" file. */
+
     virtual Path * getChainPointer(int i);
+    /* Used for passing different types of chain to the parallelized simulation
+     * (prevents code duplicity)
+     */
 };
 
 

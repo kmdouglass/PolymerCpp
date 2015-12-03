@@ -70,18 +70,16 @@ void WormlikeChain::makePath(double in_pathLength)
         // Create a displacement in the plane tangent to currPoint
         dispVector = currPoint.cross(randVecs[i]);
         dispVector /= sqrt(dispVector.squaredNorm());
+
         // Check if displacement and currPoint vectors are parallel
+        // This should not happen (you would have to be extremely)
+        // lucky to get exactly parallel vectors with double precision
         int j=0;
         while (dispVector.squaredNorm()<0.01)
         {
             currPoint /= sqrt(currPoint.squaredNorm());
-            cout << "while   " << j++; cout.flush();
             Eigen::Vector3d * newRandVec = randPointSphere(1);
             dispVector = currPoint.cross(*newRandVec);
-            cout << *newRandVec << endl;
-            cout << currPoint << endl;
-            cout << dispVector << endl;
-            cout << "Norm: " << dispVector.squaredNorm() << endl;
             delete newRandVec;
         }
 
@@ -148,61 +146,3 @@ WLCCollector::~WLCCollector()
         delete chain;
     }
 }
-
-/*void WLCCollector::startCollector()
-{
-    cout << "Starting collector!" << endl;
-    vector<RgDict*> data;
-    // Compute the gyration radii for all the parameter pairs
-    #pragma omp parallel for schedule(static,1) num_threads(4)
-         // parallelize the next loop
-        for (int i=0; i<myChains.size(); i++) 
-        {
-            cout << "Simulation " << i << endl; cout.flush();
-            data.push_back(parSimChain(myChains[i]));
-        }
-    
-    // SAVE THE CALCULATED RgData
-    // Opens or creates the database file for adding simulation results
-
-    // sets maximum output precision
-    fileDB << std::setprecision(std::numeric_limits<double>::digits10 + 1);
-    fileDB.open(nameDB + ".txt", ios::out | ios::trunc);
-    if (!fileDB.is_open())
-    {
-        std::stringstream buffer;
-        buffer << "Could not open file: " << nameDB << ".txt" << std::endl;
-        throw std::runtime_error(buffer.str());
-    }
-
-
-    // adds info about number of RgData objects to be saved
-    fileDB << data.size();
-    fileDB << " " << segConvFactor; // info about conversion factor
-
-    for (auto & dict: data)
-    {
-        dict->addToDBfileFull(fileDB); // adds each object
-        cout << "Density: " << dict->linDensity << ", Persistence length: "
-             << dict->persisLength << std::endl;
-
-        double sumRg = 0, sumRgBump = 0;
-        for (int i=0; i<dict->Rg.size(); i++) {
-            sumRg += dict->Rg.at(i);
-            sumRgBump += dict->RgBump.at(i);
-        }
-        sumRg /= dict->Rg.size(); sumRgBump /= dict->RgBump.size();
-        cout << "   Mean Rg:     " << sumRg << endl;
-        cout << "   Mean RgBump: " << sumRgBump << endl;
-        cout << "   Calculated:  " << theoreticalWLCRg(dict->linDensity,
-                         dict->persisLength, dict->pathLength) << endl;
-    }
-    fileDB.close();
-
-
-    // collect garbage
-    for (auto & chain: myChains) delete chain;
-
-}
-
-*/

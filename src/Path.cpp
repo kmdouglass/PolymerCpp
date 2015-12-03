@@ -12,8 +12,8 @@ Path::Path(int in_numPaths, vector<double> & in_pathLength,
     pathLength = in_pathLength;
     linDensity = in_linDensity;
     segConvFactor = in_segConvFactor;
-    linkDiameter = 0.0;
-    chainWeight = 1.0;
+    linkDiameter = 0.0; // default value, overriden in SAWLC
+    chainWeight = 1.0; // default value, overriden in Rosenbluth
     initPoint = *in_initPoint;
     path.push_back(initPoint);
 }
@@ -55,9 +55,15 @@ void Path::makeNewPath(double in_pathLength)
 {
     path.clear();                   //clears existing path
     path.push_back(initPoint);      //sets first point
+
+    /* The try-catch block is for the case, when the path
+     * runs into a blind spot - after a lot of unsuccesful
+     * attempts to get out of the spot, an exception is thrown
+     * and caught by this block, which just runs a new simulation.
+     */
     try
     {
-        makePath(in_pathLength);        //creates the path    
+        makePath(in_pathLength);
     }
     catch (int exception)
     {
@@ -70,6 +76,9 @@ double Path::computeRg()
     double Rg = 0.0;
     double secondMoments[3] = {0.0, 0.0, 0.0};
     double mean; double variance;
+    /* Radius of gyration is equal to sqrt of sums of variances
+     * in each axis.
+     */
     for (int i=0; i<3; i++) {
         mean = 0.0; variance = 0.0;
         for (auto & point : path ) { // iterate over all points in path
@@ -93,7 +102,7 @@ double Path::computeRg()
 void Path::bumpPoints(double locPrecision)
 {
     for (auto & oldPoint : path) {
-        for (int i=0; i<3; i++) {
+        for (int i=0; i<3/*EPFL!*/; i++) { // each point is bumped in each axis 
             oldPoint(i) += locPrecision * randNormalReal(randGenerator);
         }
     }
@@ -101,7 +110,8 @@ void Path::bumpPoints(double locPrecision)
 }
 
 void Path::makePath(double in_pathLength) {
-	cout << "Ran the wrong makePath!";
+	cout << "Ran the wrong makePath!"; 
+    // This obviously shouldn't happen, the function is virtual.
 }
 
 
@@ -114,6 +124,9 @@ RgDict * Path::parSimChain()
     vector<double> * Wt = new vector<double>(numPaths, 0.0);
     double weightSum = 0.0;
     for (int i=0; i<numPaths; i++)
+    /* Create path, compute its gyration radius, weight, bump it
+     * and add the values to respective vectors.
+     */
     {
         makeNewPath(pathLength.at(i));
 
@@ -127,6 +140,7 @@ RgDict * Path::parSimChain()
         weightSum += Wt->at(i);
     }
     for (int i=0; i<numPaths; i++)
+    // Normalize sum of all path weights to 1.
     {
         Wt->at(i) /= weightSum;
     }
@@ -173,6 +187,7 @@ Collector::Collector(int in_numPaths,
     locPrecision = in_locPrecision * segConvFactor;
 
     if (!fullSpecParam)
+    // Create a grid of parameters.
     {
         vector<double> permLinDensity;
         vector<double> permPersisLength;
@@ -188,26 +203,23 @@ Collector::Collector(int in_numPaths,
 }
 
 Path * Collector::getChainPointer(int i) {}
+// Virtual function.
 
 void Collector::startCollector()
 {
-
-
-    vector<RgDict*> data(linDensity.size());
-    // Compute the gyration radii for all the parameter pairs
+    vector<RgDict*> data(linDensity.size()); // vector for storing data
     #pragma omp parallel for schedule(dynamic,1)
-         // parallelize the next loop
+        // parallelize the next loop
         for (int i=0; i<linDensity.size(); i++) 
         {
             //cout << "Simulation " << i << endl; cout.flush();
-            data.at(i)=getChainPointer(i)->parSimChain();
+            data.at(i)=getChainPointer(i)->parSimChain(); // most demanding part!
         }
     
-    // SAVE THE CALCULATED RgData
-    // Opens or creates the database file for adding simulation results
+    // Save data:
 
-    // next line can be used to set maximum precision, but that should not be
-    // necessary
+    /* next line can be used to set maximum precision, but that should not be
+     * necessary */
     // fileDB << std::setprecision(std::numeric_limits<double>::digits10 + 1);
     fileDB.open(nameDB + ".txt", ios::out | ios::trunc);
     if (!fileDB.is_open())
@@ -217,7 +229,6 @@ void Collector::startCollector()
         throw std::runtime_error(buffer.str());
     }
 
-
     // adds info about number of RgData objects to be saved
     fileDB << data.size();
     fileDB << " " << segConvFactor; // info about conversion factor
@@ -225,23 +236,21 @@ void Collector::startCollector()
     for (auto & dict: data)
     {
         dict->addToDBfileFull(fileDB); // adds each object
-        /*cout << endl << "Density: " << dict->linDensity << ", Persistence length: "
-             << dict->persisLength << std::endl << "Link diameter: "
-             << dict->linkDiameter << std::endl;*/
-        //* SWITCH
+        /* SWITCH - just if we want to print data to check it is correct
         double sumRg = 0, sumRgBump = 0;
         for (int i=0; i<dict->Rg.size(); i++) {
             sumRg += dict->Rg.at(i)*dict->Wt.at(i);
             sumRgBump += dict->RgBump.at(i)*dict->Wt.at(i);
         }
-        /*cout << "   Mean Rg:     " << sumRg << endl;
-        cout << /*"   Mean RgBump: " << sumRgBump << " ";
+        cout << "   Mean Rg:     " << sumRg << endl;
+        cout << "   Mean RgBump: " << sumRgBump << " ";
         cout << "   Calculated:  " << theoreticalWLCRg(dict->linDensity,
                          dict->persisLength, dict->pathLength) << endl;
         //*/
         /*cout << dict->linkDiameter << " " 
              << dict->persisLength << " "
-             << sumRg << std::endl; */
+             << sumRg << std::endl; 
+        //*/
     }
     fileDB.close();
 

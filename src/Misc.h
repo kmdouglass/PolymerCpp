@@ -16,8 +16,11 @@
 
 using namespace std;
 
+
+
 void seedRandom();
 void printRandom();
+/* Miscellaneous functions to test random number generation.
 
 
 
@@ -25,21 +28,21 @@ void convSegments(std::vector<double> & outVector,
                       std::vector<double> & inVector,
                       double convFactor,
                       bool multiplyBool);
-    /* Convert path parameters into segments.
-     * Not the most efficient way,
-     * but this is not a demanding operation.
-     * 
-     * Parameters
-     * ----------
-     * outVector : vector of doubles
-     *     Resulting segments
-     * inVector : vector of doubles
-     *     The parameters to convert into segments
-     * segConvFactor: double
-     *     Conversion factor betwee the user units and path segments
-     * multiplyBool : bool
-     *     Multiply or divide by the conversion factor
-     */
+/* Convert path parameters into segments.
+ * Not the most efficient way,
+ * but this is not a demanding operation.
+ * 
+ * Parameters
+ * ----------
+ * outVector : vector of doubles
+ *     Resulting segments
+ * inVector : vector of doubles
+ *     The parameters to convert into segments
+ * segConvFactor: double
+ *     Conversion factor betwee the user units and path segments
+ * multiplyBool : bool
+ *     Multiply or divide by the conversion factor
+ */
 
 
 double sum(vector<double> & vect);

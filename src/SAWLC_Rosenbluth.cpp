@@ -18,6 +18,7 @@ SAWLC_Rosenbluth::SAWLC_Rosenbluth(int in_numPaths, vector<double> & in_pathLeng
 
 double SAWLC_Rosenbluth::getDefaultWeight()
 {
+    // Create simplest path configuration for calculation of this integral.
     vector<Eigen::Vector3d> basicPath(2, Eigen::Vector3d::Constant(0.0));
     basicPath[1](2)=1.0;
     Eigen::Vector3d nextPoint, currPoint;
@@ -33,6 +34,7 @@ double SAWLC_Rosenbluth::getDefaultWeight()
     Eigen::Vector3d * randVecs = NULL;
     int passed = 0;
     randVecs = randPointSphere(30000);
+    // See how many of these 30000 vectors are viable steps.
     for (int i=0; i<30000; i++)
     {
         if (sigma>0.00001) 
@@ -45,16 +47,22 @@ double SAWLC_Rosenbluth::getDefaultWeight()
         dispVector = dispVector * tanPlaneDisp;
         projDistance = 1 - cos(angDisp);
         nextPoint = ((1 - projDistance) * currPoint) + dispVector;
+
         if (!checkCollision(&nextPoint, basicPath, collisions, 2))
             passed++;
     }
     delete randVecs;
+    // Return the fraction of vectors that passed - this is the weight.
     return ((double)passed)/30000.0;
 }
 
 double SAWLC_Rosenbluth::computeIntegral(vector<Eigen::Vector3d> & cumulativePath,
                        vector<int> & collisionPositions, int where)
 {
+    /* Similar as with defaultWeight, but this time we can have more possible
+     * collision points, positions of which are stored in the collisionPositions
+     * vector.
+     */
     Eigen::Vector3d nextPoint, currPoint;
     double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
                                              : 0.0;
@@ -65,7 +73,7 @@ double SAWLC_Rosenbluth::computeIntegral(vector<Eigen::Vector3d> & cumulativePat
     int passed = 0;
     randVecs = randPointSphere(5000);
     currPoint = cumulativePath[where-1]-cumulativePath[where-2];
-    for (int i=0; i<5000; i++)
+    for (int i=0; i<5000; i++) // This function is done often, so less precision.
     {
         if (sigma>0.00001) 
             angDisp = sigma * randNormalReal(randGenerator);
@@ -89,8 +97,12 @@ double SAWLC_Rosenbluth::getNextStepWeight(vector<Eigen::Vector3d> & cumulativeP
                                 vector<int> & collisionPositions,
                                 int where)
 {
+    /* If there is only one point available for collision, it's the previous one,
+     * so the weight is the defaultWeight which we cleverly precomputed with
+     * higher precision. */
     if (collisionPositions.size() == 1)
         return defaultWeight;
+    /* If there are more possible collisions, we have to compute the integral.*/
     else
         return computeIntegral(cumulativePath, collisionPositions, where);
 }
@@ -110,6 +122,8 @@ SACollector_Rosenbluth::SACollector_Rosenbluth(int in_numPaths,
 				in_linkDiameter,
                 in_nameDB, in_segConvFactor, in_locPrecision, in_fullSpecParam)
 {
+    // Since it uses SACollector, it has to delete chains created by parent class
+    // and then substitute its own chains.
     for (auto & chain: myChains)
     {
     	delete chain;

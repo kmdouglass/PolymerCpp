@@ -13,12 +13,10 @@ SAWLC::SAWLC(int in_numPaths, vector<double> & in_pathLength,
     : Path(in_numPaths, in_pathLength, in_linDensity,
             in_segConvFactor, in_initPoint)
 {
-	
     persisLength = in_persisLength;
     locPrecision = in_locPrecision;
     linkDiameter = in_linkDiameter;
     defaultWeight = 1.0;
-    //cout << "defaultWeight: " << defaultWeight << std::endl;
 
     if (1.0 < linkDiameter)
     {
@@ -35,22 +33,18 @@ void SAWLC::makePath(double in_pathLength)
     /* this chunk of code is the same in SAWLC and WLC
      * but I cant put it to Path:: because it would go out of scope
      */
-    int numSegments = (int) (in_pathLength / linDensity);
+    int numSeg = (int) (in_pathLength / linDensity);
     // check if numSegments is in valid range
-    if (numSegments <3)
+    if (numSeg <3)
     {
         std::stringstream buffer;
         buffer << "The number of segments must be greater than 3, but a "
-            << "value of " << numSegments << "was supplied. "
+            << "value of " << numSeg << "was supplied. "
             << "Why would you want such a short chain anyways?" << std::endl;
         throw std::out_of_range(buffer.str());
     }
-
-    // split numSegments into integer and leftover
-    // no leftover for the time being
-    int numSeg;
-    numSeg = (int)numSegments;
-
+    // If persistence length is 0, sigma is set to 0
+    // to mark that uniform number generation should be used
     double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
                                              : 0.0;
     Eigen::Vector3d currPoint = initPoint;
@@ -67,16 +61,13 @@ void SAWLC::makePath(double in_pathLength)
     vector<int> collisionPositions;
     double angDisp, tanPlaneDisp;
     Eigen::Vector3d * randVec = NULL;
-    //reloadBuffer(cumulativePath, 2);
     for (int i=2; i<numSeg; i++)
     {
-        //if (i%50 == 0)
-        //    reloadBuffer(cumulativePath, i);
-    	// compute weight of step by integration over space
+        // Scan the chain for possible collisions and save them to colPos vector
         getPossibleCollisions(cumulativePath, collisionPositions, i);
 
+        // Calculate step weight (in SAWLC it is always 1)
         stepWeights[i] = getNextStepWeight(cumulativePath, collisionPositions, i);
-        //cout << "Step of weight " << i << ": " << stepWeights[i] << std::endl;
         int j = 0;
         while (true)
         // keep generating vectors until you get one which is ok
@@ -94,6 +85,7 @@ void SAWLC::makePath(double in_pathLength)
             projDistance = 1 - cos(angDisp);
             nextPoint = ((1 - projDistance) * currPoint) + dispVector;
             if (!checkCollision(&nextPoint, cumulativePath, collisionPositions, i))
+            // step is OK, add it to path and move on
             {
                 workingPath[i] = nextPoint;;
                 cumulativePath[i] = nextPoint + cumulativePath[i-1];
@@ -101,12 +93,9 @@ void SAWLC::makePath(double in_pathLength)
                 delete randVec;
                 break;
             }
+            // Otherwise, delete newly allocated vectors and try again.
             delete randVec;
-            /*if (j%1000 == 0)
-            {
-                cout << "Tried new vector 1000 times, something is wrong!"
-                    << std::endl; cout.flush(); 
-            }*/
+            // If 10000 attempts fail, throws exception which resets the chain.
             if (j%10000 == 0)
             {
                 //cout << "DEAD END" << std::endl; cout.flush();
@@ -122,6 +111,8 @@ void SAWLC::makePath(double in_pathLength)
     {
         path.push_back(cumulativePath[i]);
     }
+
+    // calculate and save weight
     double wt = 1.0;
     for (auto & entry: stepWeights)
         wt *= entry;
@@ -156,13 +147,16 @@ void SAWLC::getPossibleCollisions(
     Eigen::Vector3d endPoint = cumulativePath.at(where-1);
     // we use square of distance, because we dont want to compute sqrt()
     // in each iteration, and distance is always positive
+    // in each step this is the furthest that the collision sphere can reach
     double limitSquared = (1.0 + linkDiameter)*(1.0 + linkDiameter);
     for (int i=0; i<where-2; i++)
-    // ignore last 2 points because they are always colliding
+    // ignore last 2 points because they are always a potential collision
     {
+        // get distance of this point from end of chain
         distanceVector = endPoint - cumulativePath[i];
         distanceSquared = distanceVector.squaredNorm();
         if (distanceSquared < limitSquared)
+        // point is close enough that it might cause a collision
         {
             collisionPositions.push_back(i);
             /*cout << "Possible collision found at link no. "
@@ -172,15 +166,6 @@ void SAWLC::getPossibleCollisions(
     }
     collisionPositions.push_back(where-2);
     // the second-to-last link is always available for collision
-    
-    
-    /*if (collisionPositions.size() > 0)
-    {
-        cout << "Found " << collisionPositions.size()
-            << " possible collision(s) with body of chain! "
-            << "At point " << cumulativePath.size()-1 << endl
-            << collisionPositions.at(0) << endl; cout.flush();
-    }*/
 }
 
 bool SAWLC::checkCollision(Eigen::Vector3d * nextPoint,
@@ -189,11 +174,12 @@ bool SAWLC::checkCollision(Eigen::Vector3d * nextPoint,
                            int where)
 {
     Eigen::Vector3d endPoint = *nextPoint + cumulativePath[where-1];
-    //cout << "endPoint: " << std::endl << endPoint << std::endl;
     Eigen::Vector3d distanceVector; double distanceSquared;
     double limitSquared = linkDiameter*linkDiameter;
-    //cout << "collisionPositions size: " << collisionPositions.size() << std::endl;
+
     for (auto & position : collisionPositions)
+    /* Scans every point in collisionPositions (which was acquired beforehand)
+     * and checks if the step collides with it */
     {
         distanceVector = endPoint - cumulativePath[position];
         distanceSquared = distanceVector.squaredNorm();
@@ -201,40 +187,13 @@ bool SAWLC::checkCollision(Eigen::Vector3d * nextPoint,
         {
             /*cout << "Collision averted at link no. "
                 << where-1 << std::endl
-                << "Distance: " << distance << std::endl
-                << "simLinkDiameter: " << simLinkDiameter << std::endl; cout.flush();
+                << "Distance: " << sqrt(distanceSquared) << std::endl
+                << "linkDiameter: " << linkDiameter << std::endl; cout.flush();
             */
             return true;
         }
     }
     return false;
-}
-
-// not used ATM
-void SAWLC::reloadBuffer(vector<Eigen::Vector3d> & cumulativePath, int where)
-{
-    collisionBuffer.clear();
-    Eigen::Vector3d distanceVector; double distanceSquared;
-    Eigen::Vector3d endPoint = cumulativePath.at(where-1);
-    // we use square of distance, because we dont want to compute sqrt()
-    // in each iteration, and distance is always positive
-    double limitSquared = (50.0 + linkDiameter)*(50.0 + linkDiameter);
-    for (int i = 0; i < where-2; i++)
-    // ignore last 2 points because they are always colliding
-    {
-        distanceVector = endPoint - cumulativePath[i];
-        distanceSquared = distanceVector.squaredNorm();
-        if (distanceSquared < limitSquared)
-        {
-            collisionBuffer.push_back(i);
-            /*cout << "Possible collision found at link no. "
-                << where << ", with link no. "
-                << i << std::endl; cout.flush();*/
-        }
-    }
-    // the second-to-last link is always available for collision,
-    // we ignored it above, we add it now so we dont do it in the loop
-    collisionBuffer.push_back(where-2);
 }
 
 
@@ -269,6 +228,8 @@ SACollector::SACollector(int in_numPaths,
         persisLength = permPersisLength;
         linkDiameter = permLinkDiameter;
     }
+
+    // Initializes chains, which are then simulated by parSimChain
     for (int i=0; i<linDensity.size(); i++)
     {
         Eigen::Vector3d startDir(1.0,0.0,0.0);
@@ -294,58 +255,3 @@ SACollector::~SACollector()
         delete chain;
     }
 }
-
-/*void SACollector::startCollector()
-{
-    cout << "Starting collector!" << endl;
-    // Begin collecting wormlike chain conformation statistics.
-
-    vector<RgDict*> data;
-    #pragma omp parallel for schedule(static,1) num_threads(4)
-         // parallelize the next loop
-        for (int i=0; i<myChains.size(); i++) 
-        {
-            cout << "Simulation " << i << endl; cout.flush();
-            data.push_back(parSimChain(myChains[i]));
-        }
-        // SAVE THE CALCULATED RgData
-    // Opens or creates the database file for adding simulation results
-
-    // sets maximum output precision
-    fileDB << std::setprecision(std::numeric_limits<double>::digits10 + 1);
-    fileDB.open(nameDB + ".txt", ios::out | ios::trunc);
-    if (!fileDB.is_open())
-    {
-        std::stringstream buffer;
-        buffer << "Could not open file: " << nameDB << ".txt" << std::endl;
-        throw std::runtime_error(buffer.str());
-    }
-
-
-    // adds info about number of RgData objects to be saved
-    fileDB << data.size();
-    fileDB << " " << segConvFactor; // info about conversion factor
-
-    for (auto & dict: data)
-    {
-        dict->addToDBfileFull(fileDB); // adds each object
-        cout << "Density: " << dict->linDensity << ", Persistence length: "
-             << dict->persisLength << std::endl;
-
-        double sumRg = 0, sumRgBump = 0;
-        for (int i=0; i<dict->Rg.size(); i++) {
-            sumRg += dict->Rg.at(i);
-            sumRgBump += dict->RgBump.at(i);
-        }
-        sumRg /= dict->Rg.size(); sumRgBump /= dict->RgBump.size();
-        cout << "   Mean Rg:     " << sumRg << endl;
-        cout << "   Mean RgBump: " << sumRgBump << endl;
-        cout << "   Calculated:  " << theoreticalWLCRg(dict->linDensity,
-                         dict->persisLength, dict->pathLength) << endl;
-    }
-    fileDB.close();
-
-
-    // collect garbage
-    for (auto & chain: myChains) delete chain;
-}*/

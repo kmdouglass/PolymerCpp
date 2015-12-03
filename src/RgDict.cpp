@@ -12,6 +12,8 @@ RgDict::RgDict(std::vector<double> & in_Rg, std::vector<double> & in_RgBump,
     Wt = in_Wt;
     pathLength = in_pathLength;
     if (convert) {
+        /* If we want to convert segments back to user units,
+         * perform the necessary conversions. */ 
         convSegments(Rg, in_Rg, in_segConvFactor, false);
         convSegments(RgBump, in_RgBump, in_segConvFactor, false);
         linDensity = in_linDensity * in_segConvFactor;
@@ -19,6 +21,7 @@ RgDict::RgDict(std::vector<double> & in_Rg, std::vector<double> & in_RgBump,
         linkDiameter = in_linkDiameter / in_segConvFactor;
     }
     else {
+        /* Otherwise just copy variables. */
         linDensity = in_linDensity;
         persisLength = in_persisLength;
         linkDiameter = in_linkDiameter;
@@ -33,7 +36,7 @@ void RgDict::addToDBfileFull(std::ofstream & fileDB)
     fileDB << " " << persisLength;
     fileDB << " " << linkDiameter;
     fileDB << " " << Rg.size() << endl;
-    /* SWITCH if you want weights in outpus
+    /* SWITCH if you want weights in output
     for (int i=0; i<Rg.size(); i++)
     {
         fileDB << " " << Wt[i];
@@ -52,6 +55,7 @@ void RgDict::addToDBfileFull(std::ofstream & fileDB)
 
 void RgDict::addToDBfileShort(std::ofstream & fileDB)
 {
+    // Shortened version of output - not used at the moment.
     fileDB << endl << pathLength;
     fileDB << " " << linDensity;
     fileDB << " " << persisLength;
@@ -77,11 +81,12 @@ void RgDict::addToDBfileShort(std::ofstream & fileDB)
 
 double RgDict::getVariance(bool bumped)
 {
-    // expecting sum of all weights to be 1
+    // Expecting sum of all weights to be 1
     assert((abs(sum(Wt))<1.02 && abs(sum(Wt))>0.98));
     
     double variance = 0.0, meanOfSquare = 0.0, squareOfMean = 0.0;
     vector<double> * RgPtr;
+    // Decide if we want variance of bumped chain or original one.
     RgPtr = bumped ? &RgBump : &Rg;
 
     double value;
