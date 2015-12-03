@@ -20,7 +20,7 @@ using namespace std;
 
 void seedRandom();
 void printRandom();
-/* Miscellaneous functions to test random number generation.
+/* Miscellaneous functions to test random number generation. */
 
 
 
