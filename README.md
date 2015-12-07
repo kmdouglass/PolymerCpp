@@ -16,3 +16,23 @@ No additional dependencies should be required. External libraries used are:
  - [Stopwatch](https://code.google.com/p/cpp-stopwatch/) - Code profiling and timing
 
 Simulation results are saved in raw text format into specified files, contents of which are completely overwritten.
+
+Simulation parameters:
+```c++
+ int numPaths
+   //number of paths that have to be simulated for each
+   //parameter combination
+ vector<double> pathLength
+   //pathLength.size()==numPaths
+   //length of each path in base pairs
+ double linDensity
+   //number of genomic base pairs per unit length
+ double persisLength
+   //parameter of chain
+ double segConvFactor
+   //number of simulated segments per unit length
+ double locPrecision
+   //used for bumping the chain
+ double linkDiameter
+   //diameter of excluded volume sphere around each link
+```
