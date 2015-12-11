@@ -14,6 +14,59 @@ extern std::normal_distribution<double> randNormalReal;
 int main (int argc, char *argv[])
 {
     seedRandom();
+
+    //* Set up simulation parameters
+    Stopwatch swatch; swatch.set_mode(REAL_TIME);
+    int numPaths = 150000;
+
+    vector<double> pathLength(numPaths,11000);
+    for (int i=0; i<pathLength.size(); i++)
+    {
+        pathLength[i] += 1500*(randNormalReal(randGenerator)-0.5);
+        if (pathLength[i] < 7000)
+            pathLength[i] = 7000;
+        if (pathLength[i] > 15000)
+            pathLength[i] = 15000;
+    }
+            
+    vector<double> linDensity, persisLength;
+    vector<double> linkDiameter {11.0};
+    for (double i = 5.0; i<60.0; i+=5.0)
+    {
+        linDensity.push_back(i);
+        persisLength.push_back(i);
+    }
+    double segConvFactor = 1.0/11.0;
+    double locPrecision = 15.0;
+    //*/
+
+
+    // Run self-avoiding simulation
+    swatch.start("sw");
+    SACollector myCollector(numPaths,
+                         pathLength,
+                         linDensity,
+                         persisLength,
+                         linkDiameter,
+                         "dataSA",
+                         segConvFactor,
+                         locPrecision,
+                         false);
+    myCollector.startCollector();
+
+    // Run WLC simulation
+    WLCCollector myWLCCollector(numPaths,
+                         pathLength,
+                         linDensity,
+                         persisLength,
+                         "dataWLC",
+                         segConvFactor,
+                         locPrecision,
+                         false);
+    myWLCCollector.startCollector();
+    swatch.stop("sw");
+    cout << "Total simulation time: "
+         << swatch.get_total_time("sw") << std::endl;
     /* SWITCH: Test case 1: Test sphere sampling
 
     Eigen::Vector3d startPoint(0.0,1.0,0.0);
@@ -327,57 +380,4 @@ int main (int argc, char *argv[])
     //*/
 
 
-    Stopwatch swatch; swatch.set_mode(REAL_TIME);
-    int numPaths = 150000;
-
-    /* data1, data1SA
-    vector<double> linDensity {2.5, 7.5, 12.5};
-    vector<double> persisLength = {2.5, 7.5, 12.5};
-    for (double i = 5.0; i<60.0; i+=5.0)
-    {
-        linDensity.push_back(i);
-        persisLength.push_back(i);
-    }
-    //*/
-
-    //* data2, data2SA
-    vector<double> linDensity {2.5, 7.5, 12.5};
-    vector<double> persisLength = {0, 60, 65, 70, 75, 80};
-    for (double i = 5.0; i<60.0; i+=5.0)
-    {
-        linDensity.push_back(i);
-    }
-    //*/    
-
-    vector<double> linkDiameter {11.0};
-    double segConvFactor = 1.0/13.0;
-    double locPrecision = 15.0;
-    vector<double> pathLength(numPaths,11000);
-    for (int j=0; j<4; j++)
-        for (int i=0; i<pathLength.size(); i++)
-            pathLength[i] += 2000*(randUniformReal(randGenerator)-0.5);
-    swatch.start("sw");
-    SACollector myCollector(numPaths,
-                         pathLength,
-                         linDensity,
-                         persisLength,
-                         linkDiameter,
-                         "data2SA",
-                         segConvFactor,
-                         locPrecision,
-                         false);
-    myCollector.startCollector();
-
-    WLCCollector myWLCCollector(numPaths,
-                         pathLength,
-                         linDensity,
-                         persisLength,
-                         "data2",
-                         segConvFactor,
-                         locPrecision,
-                         false);
-    myWLCCollector.startCollector();
-    swatch.stop("sw");
-    cout << swatch.get_total_time("sw") << " ";
-    //*/
 }

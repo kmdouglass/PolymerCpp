@@ -1,8 +1,8 @@
-/* Classes and functions pertaining to WormlikeChain generation
+/* Classes and functions pertaining to WLC generation
  * and analysis. */
 
-#ifndef H_WORMLIKECHAIN
-#define H_WORMLIKECHAIN
+#ifndef H_WLC
+#define H_WLC
 
 #include <iostream>       // Input/output
 #include <Eigen/Core>     // Linear algebra
@@ -21,7 +21,7 @@
 #include "RgDict.h"
 #include "Misc.h"
 
-class WormlikeChain: public Path
+class WLC: public Path
 /* A 3D wormlike chain.
  * 
  * Member variables:
@@ -46,7 +46,7 @@ class WormlikeChain: public Path
 {
 public:
 
-    WormlikeChain(int in_numPaths, vector<double> & in_pathLength, 
+    WLC(int in_numPaths, vector<double> & in_pathLength, 
                   double in_linDensity, double in_persisLength,
                   double in_segConvFactor, double in_locPrecision, 
                   Eigen::Vector3d * in_initPoint);
@@ -81,7 +81,7 @@ public:
      *  trajectory of the polymer.
      *
      *  Initial point to start polymer is determined by initPoint,
-     *  which is set when initializing the class WormlikeChain. */
+     *  which is set when initializing the class WLC. */
 
     double getTheoreticalRg();
 };
@@ -124,7 +124,7 @@ class WLCCollector : public Collector
  */
 {
 public:
-    vector<WormlikeChain*> myChains;
+    vector<WLC*> myChains;
 
     // Constructor, initializes the variables, opens file for read/write
     // and starts the collector
@@ -139,7 +139,7 @@ public:
 
     ~WLCCollector();
 
-    WormlikeChain * getChainPointer(int i);
+    WLC * getChainPointer(int i);
     //void startCollector();
     /* Simulates the WLCs and collects the information about them.
      * Then it saves the information into the specified database */

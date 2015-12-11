@@ -1,4 +1,4 @@
-#include "WormlikeChain.h"
+#include "WLC.h"
 
 using namespace std;
 
@@ -7,7 +7,7 @@ extern std::uniform_real_distribution<double> randUniformReal;
 extern std::normal_distribution<double> randNormalReal;
 
 
-WormlikeChain::WormlikeChain(int in_numPaths, vector<double> & in_pathLength, 
+WLC::WLC(int in_numPaths, vector<double> & in_pathLength, 
                   double in_linDensity, double in_persisLength,
                   double in_segConvFactor, double in_locPrecision, 
                   Eigen::Vector3d * in_initPoint) 
@@ -18,7 +18,7 @@ WormlikeChain::WormlikeChain(int in_numPaths, vector<double> & in_pathLength,
     persisLength = in_persisLength;
 }
 
-void WormlikeChain::makePath(double in_pathLength)
+void WLC::makePath(double in_pathLength)
 {
     /* this chunk of code is the same in SAWLC and WLC
      * but I cant put it to Path:: because it would go out of scope
@@ -106,7 +106,7 @@ void WormlikeChain::makePath(double in_pathLength)
     delete randVecs;
 }
 
-double WormlikeChain::getTheoreticalRg()
+double WLC::getTheoreticalRg()
 {
     return theoreticalWLCRg(linDensity, persisLength, pathLength[0]);
 }
@@ -126,15 +126,15 @@ WLCCollector::WLCCollector(int in_numPaths,
     for (int i=0; i<linDensity.size(); i++)
     {
         Eigen::Vector3d startDir(1.0,0.0,0.0);
-        WormlikeChain * myChain = 
-            new WormlikeChain(numPaths, pathLength, linDensity[i], 
+        WLC * myChain = 
+            new WLC(numPaths, pathLength, linDensity[i], 
                     persisLength[i], segConvFactor, locPrecision,
                     &startDir);
         myChains.push_back(myChain);
     }
 }
 
-WormlikeChain * WLCCollector::getChainPointer(int i)
+WLC * WLCCollector::getChainPointer(int i)
 {
     return myChains[i];
 }
