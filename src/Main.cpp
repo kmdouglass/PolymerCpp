@@ -5,7 +5,7 @@
 
 #include "Main.h"
 
-extern std::default_random_engine randGenerator;
+extern std::minstd_rand0 randGenerator;
 extern std::uniform_real_distribution<double> randUniformReal;
 extern std::normal_distribution<double> randNormalReal;
 
