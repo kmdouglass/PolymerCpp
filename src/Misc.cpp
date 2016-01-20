@@ -3,7 +3,7 @@
 using namespace std;
 
 unsigned seed;
-std::default_random_engine randGenerator(1u);
+std::minstd_rand0 randGenerator(1u);
 std::uniform_real_distribution<double> randUniformReal(0.0,1.0);
 std::normal_distribution<double> randNormalReal(0.0,1.0);
 
