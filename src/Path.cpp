@@ -1,6 +1,6 @@
 #include "Path.h"
 
-extern std::default_random_engine randGenerator;
+extern std::minstd_rand randGenerator;
 extern std::uniform_real_distribution<double> randUniformReal;
 extern std::normal_distribution<double> randNormalReal;
 
