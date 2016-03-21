@@ -53,22 +53,18 @@ Eigen::Vector3d * Path::randPointSphere()
 
 void Path::makeNewPath(double in_pathLength)
 {
-    path.clear();                   //clears existing path
-    path.push_back(initPoint);      //sets first point
-
-    /* The try-catch block is for the case, when the path
+    int numSegments = (int) (in_pathLength / linDensity);
+    /* The next block is for the case, when the path
      * runs into a blind spot - after a lot of unsuccesful
-     * attempts to get out of the spot, an exception is thrown
-     * and caught by this block, which just runs a new simulation.
+     * attempts to get out of the spot, function returns
+     * which just runs a new simulation.
      */
-    try
+    do
     {
+        path.clear();                   //clears existing path
+        path.push_back(initPoint);      //sets first point
         makePath(in_pathLength);
-    }
-    catch (int exception)
-    {
-        makeNewPath(in_pathLength);
-    }
+    } while (path.size() < numSegments);
 }
 
 double Path::computeRg()

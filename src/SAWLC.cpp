@@ -99,7 +99,7 @@ void SAWLC::makePath(double in_pathLength)
             if (j%10000 == 0)
             {
                 //cout << "DEAD END" << std::endl; cout.flush();
-                throw 42;
+                return;
             }
         }
     	// move to next step
