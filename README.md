@@ -36,3 +36,7 @@ Simulation parameters:
  double linkDiameter
    //diameter of excluded volume sphere around each link
 ```
+
+
+## Acknowledgements
+This is a high-performance C++ version of PolymerPy, an wormlike-chain generation algorithm developed by [Kyle M. Douglass, PhD.](https://github.com/kmdouglass)
