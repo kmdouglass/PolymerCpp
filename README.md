@@ -39,4 +39,4 @@ Simulation parameters:
 
 
 ## Acknowledgements
-This is a high-performance C++ version of PolymerPy, an wormlike-chain generation algorithm developed by [Kyle M. Douglass, PhD.](https://github.com/kmdouglass)
+This is an optimized C++ version of PolymerPy, a wormlike-chain generation algorithm developed by [Kyle M. Douglass, PhD.](https://github.com/kmdouglass)
