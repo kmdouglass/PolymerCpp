@@ -237,8 +237,6 @@ static PyObject * getSAWLC(PyObject *self, PyObject *args)
     return vectorToTuple_Float(chainPoints);
 } 
 
-
-
 static PyMethodDef PolymerCppMethods[] = 
 {
     {"getWLCrgs",  getWLCrgs, METH_VARARGS,
@@ -252,19 +250,43 @@ static PyMethodDef PolymerCppMethods[] =
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-PyMODINIT_FUNC initPolymerCpp(void)
+static struct PyModuleDef PolymerCpp =
 {
-    (void) Py_InitModule("PolymerCpp", PolymerCppMethods);
+    PyModuleDef_HEAD_INIT,
+    "PolymerCpp",
+    "",          /* module documentation, may be NULL */
+    -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    PolymerCppMethods
+};
+
+PyMODINIT_FUNC
+PyInit_PolymerCpp(void)
+{
+  return PyModule_Create(&PolymerCpp);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
+    wchar_t *program = Py_DecodeLocale(argv[0], NULL);
+    if (program == NULL) {
+        fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
+        exit(1);
+    }
+
+    /* Add a built-in module, before Py_Initialize */
+    PyImport_AppendInittab("PolymerCpp", PyInit_PolymerCpp);
+
     /* Pass argv[0] to the Python interpreter */
-    Py_SetProgramName(argv[0]);
+    Py_SetProgramName(program);
 
     /* Initialize the Python interpreter.  Required. */
     Py_Initialize();
 
-    /* Add a static module */
-    initPolymerCpp();
+    /* Optionally import the module; alternatively,
+       import can be deferred until the embedded script
+       imports it. */
+    PyImport_ImportModule("PolymerCpp");
+
+    PyMem_RawFree(program);
+    return 0;
 }
