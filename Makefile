@@ -1,8 +1,8 @@
 # © All rights reserved. ECOLE POLYTECHNIQUE FEDERALE DE LAUSANNE,
-# Switzerland, Laboratory of Experimental Biophysics, 2016-2017
+# Switzerland, Laboratory of Experimental Biophysics, 2017
 # See the LICENSE.txt file for more details.
 
-CC := g++ # This is the main compiler
+CC := g++
 SRCDIR := PolymerCpp/core
 BUILDDIR := build
 TARGETDIR := lib
