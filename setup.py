@@ -25,6 +25,7 @@ config={'name': 'PolymerCpp',
         'author': 'Marcel Stefko, Kyle M. Douglass',
         'author_email': 'marcel.stefko@epfl.ch, kyle.m.douglass@gmail.com',
         'url': 'https://github.com/MStefko/PolymerCpp',
+        'packages': ['PolymerCpp'],
         'ext_modules': [module]}
 
 setup(**config)
