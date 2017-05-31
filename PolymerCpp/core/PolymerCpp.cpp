@@ -128,8 +128,7 @@ static PyObject * getSAWLC(PyObject *self, PyObject *args)
 	double pathLength;
 	double persisLength;
 	double linkDiameter;
-    if (!PyArg_ParseTuple(args, "dddd", &pathLength,
-    	&persisLength, &linkDiameter))
+    if (!PyArg_ParseTuple(args, "ddd", &pathLength, &persisLength, &linkDiameter))
         return NULL;
 
     Eigen::Vector3d startDir(1.0,0.0,0.0);

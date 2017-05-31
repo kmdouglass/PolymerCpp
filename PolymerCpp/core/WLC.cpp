@@ -64,8 +64,8 @@ void WLC::makePath(double in_pathLength)
         dispVector /= sqrt(dispVector.squaredNorm());
 
         // Check if displacement and currPoint vectors are parallel
-        // This should not happen (you would have to be extremely)
-        // lucky to get exactly parallel vectors with double precision
+        // This should not happen (you would have to be extremely
+        // unlucky to get exactly parallel vectors with double precision
         while (dispVector.squaredNorm()<0.01)
         {
             currPoint /= sqrt(currPoint.squaredNorm());
