@@ -4,14 +4,10 @@ extern std::minstd_rand randGenerator;
 extern std::uniform_real_distribution<double> randUniformReal;
 extern std::normal_distribution<double> randNormalReal;
 
-Path::Path(int in_numPaths, vector<double> & in_pathLength, 
-                  double in_linDensity, double in_segConvFactor,
-                  Eigen::Vector3d * in_initPoint)
+Path::Path(double in_pathLength, 
+          Eigen::Vector3d * in_initPoint)
 {
-    numPaths = in_numPaths;
     pathLength = in_pathLength;
-    linDensity = in_linDensity;
-    segConvFactor = in_segConvFactor;
     linkDiameter = 0.0; // default value, overriden in SAWLC
     chainWeight = 1.0; // default value, overriden in Rosenbluth
     initPoint = *in_initPoint;
@@ -53,7 +49,8 @@ Eigen::Vector3d * Path::randPointSphere()
 
 void Path::makeNewPath(double in_pathLength)
 {
-    int numSegments = (int) (in_pathLength / linDensity);
+    // TODO: Account for fractional path lengths
+    int numSegments = (int) in_pathLength;
     /* The next block is for the case, when the path
      * runs into a blind spot - after a lot of unsuccessful
      * attempts to get out of the spot, function returns
@@ -112,6 +109,7 @@ void Path::makePath(double in_pathLength) {
 
 
 
+/* TODO: Needs to restructured like the rest of the project.
 RgDict * Path::parSimChain()
 {
     // work copies of variables
@@ -120,9 +118,9 @@ RgDict * Path::parSimChain()
     vector<double> * Wt = new vector<double>(numPaths, 0.0);
     double weightSum = 0.0;
     for (int i=0; i<numPaths; i++)
-    /* Create path, compute its gyration radius, weight, bump it
-     * and add the values to respective vectors.
-     */
+    // Create path, compute its gyration radius, weight, bump it
+    // and add the values to respective vectors.
+     
     {
         makeNewPath(pathLength.at(i));
 
@@ -146,14 +144,23 @@ RgDict * Path::parSimChain()
         persisLength, linkDiameter, segConvFactor, true);
     return result;
 }
+*/
 
-double theoreticalWLCRg(double c, double Lp, double N)
+double theoreticalWLCRg(double Lp, double Lc)
 {
-    double Rg2 = (Lp * N / c) / 3 - 
-                    Lp*Lp + 
-                    2 * (Lp*Lp*Lp) / ((N / c)*(N / c)) *
-                  ((N / c) - Lp * (1 - exp(-(N/c)/Lp)));
-    return sqrt(Rg2);
+    /* Computes the theoretical value for the chain's radius of gyration.
+     * 
+     * Parameters
+     * ----------
+     * Lp
+     *     Persistence length of the chain.
+     * Lc   
+     *     Contour length of the chain.
+     * 
+     */
+    double Rg2 = Lp * Lc / 3 - Lp*Lp + 2 * (Lp*Lp*Lp) / (Lc * Lc) *
+                     (Lc - Lp * (1 - exp(-Lc/Lp)));
+    return Rg2;
 }
 
 
@@ -203,6 +210,8 @@ Path * Collector::getChainPointer(int i) {}
 
 void Collector::startCollector()
 {
+ 
+    /* TODO: Needs to restructured like the rest of the project.
     vector<RgDict*> data(linDensity.size()); // vector for storing data
     #pragma omp parallel for schedule(dynamic,1)
         // parallelize the next loop
@@ -214,8 +223,8 @@ void Collector::startCollector()
     
     // Save data:
 
-    /* next line can be used to set maximum precision, but that should not be
-     * necessary */
+    // next line can be used to set maximum precision, but that should not be
+    // necessary
     // fileDB << std::setprecision(std::numeric_limits<double>::digits10 + 1);
     fileDB.open(nameDB + ".txt", ios::out | ios::trunc);
     if (!fileDB.is_open())
@@ -246,8 +255,8 @@ void Collector::startCollector()
         /*cout << dict->linkDiameter << " " 
              << dict->persisLength << " "
              << sumRg << std::endl; 
-        //*/
+        //
     }
     fileDB.close();
-
+*/
 }

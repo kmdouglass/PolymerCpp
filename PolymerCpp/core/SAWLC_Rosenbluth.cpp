@@ -6,12 +6,11 @@ extern std::minstd_rand randGenerator;
 extern std::uniform_real_distribution<double> randUniformReal;
 extern std::normal_distribution<double> randNormalReal;
 
-SAWLC_Rosenbluth::SAWLC_Rosenbluth(int in_numPaths, vector<double> & in_pathLength, 
-                  double in_linDensity, double in_persisLength,
-                  double in_linkDiameter, double in_segConvFactor, 
-                  double in_locPrecision, Eigen::Vector3d * in_initPoint)
-	: SAWLC(in_numPaths, in_pathLength, in_linDensity, in_persisLength, 
-		in_linkDiameter, in_segConvFactor, in_locPrecision, in_initPoint)
+SAWLC_Rosenbluth::SAWLC_Rosenbluth(double in_pathLength, 
+                                  double in_persisLength,
+                                  double in_linkDiameter,
+                                  Eigen::Vector3d * in_initPoint)
+	: SAWLC(in_pathLength, in_persisLength, in_linkDiameter, in_initPoint)
 {
 	defaultWeight = getDefaultWeight();	
 }
@@ -132,9 +131,10 @@ SACollector_Rosenbluth::SACollector_Rosenbluth(int in_numPaths,
     {
         Eigen::Vector3d startDir(1.0,0.0,0.0);
         SAWLC_Rosenbluth * myChain = 
-            new SAWLC_Rosenbluth(numPaths, pathLength, linDensity[i], 
-                    persisLength[i], linkDiameter[i], segConvFactor,
-                    locPrecision, &startDir);
+            new SAWLC_Rosenbluth(pathLength[i], 
+                                 persisLength[i], 
+                                 linkDiameter[i],
+                                 &startDir);
 
         myChains.push_back(myChain);
     }

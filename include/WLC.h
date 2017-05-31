@@ -26,12 +26,8 @@ class WLC: public Path
  * 
  * Member variables:
  * -----------------
- * numPaths: int
- *     number of paths to be simulated
  * pathLength: vector<double> of length numPaths
  *     for each path contains its genomic length
- * linDensity: double
- *      linear density of the chain 
  * persisLength: double
  *     The persistence length in units of chain segments.
  * locPrecision: double
@@ -46,10 +42,9 @@ class WLC: public Path
 {
 public:
 
-    WLC(int in_numPaths, vector<double> & in_pathLength, 
-                  double in_linDensity, double in_persisLength,
-                  double in_segConvFactor, double in_locPrecision, 
-                  Eigen::Vector3d * in_initPoint);
+    WLC(double in_pathLength,
+         double in_persisLength, 
+         Eigen::Vector3d * in_initPoint);
     /* Constructor */
 
     void makePath(double in_pathLength);

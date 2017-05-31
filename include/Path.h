@@ -22,12 +22,8 @@ const double pi = 3.1415926;
 class Path
 {   
 public:
-    int numPaths;
-    vector<double> pathLength;
-    double linDensity;
-    double segConvFactor;
+    double pathLength;
     double linkDiameter; // set to 0 if not SAWLC
-    double locPrecision;
     double persisLength;
 
     double chainWeight; // set to 1 if not Rosenbluth
@@ -35,10 +31,9 @@ public:
     Eigen::Vector3d * points;
     std::vector<Eigen::Vector3d> path;
 
-    Path(int in_numPaths, vector<double> & in_pathLength, 
-                  double in_linDensity, double in_segConvFactor,
-                  Eigen::Vector3d * in_initPoint);
     // constructor
+    Path(double in_pathLength, 
+        Eigen::Vector3d * in_initPoint);
 
     Eigen::Vector3d * randPointSphere(int numPoints);
 
@@ -89,8 +84,10 @@ public:
 
     virtual void makePath(double);
 
-    RgDict * parSimChain();
- /* Pimary processing for-loop to be parallelized.
+ /*TODO: needs to be restructured like the rest of the project.
+  * 
+  * RgDict * parSimChain();
+  * Primary processing for-loop to be parallelized.
   * 
   * parSimChain(data) is the most intensive part of the simulation. It
   * is a function applied to a Path instance and repeatedly
@@ -107,22 +104,20 @@ public:
 
 
 
-double theoreticalWLCRg(double c, double Lp, double N);
+double theoreticalWLCRg(double Lp, double Lc);
  /* Return the theoretical value for the gyration radius.
   *
-  *  Parameters
-  *  ----------
-  *  c : double
-  *      The linear density of base pairs in the chain.
-  *  Lp : double
-  *      The persistence length of the wormlike chain.
-  *  N : double
-  *      The number of base pairs in the chain.
+  * Parameters
+  * ----------
+  * Lp
+  *     Persistence length of the chain.
+  * Lc   
+  *     Contour length of the chain.
   *
   *  Returns
   *  -------
-  *  meanRg : double 
-  *     The mean gyration radius of a theoretical wormlike chain. */
+  *  Rg2 
+  *     The mean gyration radius (squared) of a theoretical wormlike chain. */
 
 
 class Collector

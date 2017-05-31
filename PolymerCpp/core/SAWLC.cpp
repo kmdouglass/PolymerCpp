@@ -6,15 +6,13 @@ extern std::minstd_rand randGenerator;
 extern std::uniform_real_distribution<double> randUniformReal;
 extern std::normal_distribution<double> randNormalReal;
 
-SAWLC::SAWLC(int in_numPaths, vector<double> & in_pathLength, 
-                  double in_linDensity, double in_persisLength,
-                  double in_linkDiameter, double in_segConvFactor, 
-                  double in_locPrecision, Eigen::Vector3d * in_initPoint)
-    : Path(in_numPaths, in_pathLength, in_linDensity,
-            in_segConvFactor, in_initPoint)
+SAWLC::SAWLC(double in_pathLength, 
+              double in_persisLength,
+              double in_linkDiameter, 
+              Eigen::Vector3d * in_initPoint)
+    : Path(in_pathLength, in_initPoint)
 {
     persisLength = in_persisLength;
-    locPrecision = in_locPrecision;
     linkDiameter = in_linkDiameter;
     defaultWeight = 1.0;
 
@@ -33,7 +31,7 @@ void SAWLC::makePath(double in_pathLength)
     /* this chunk of code is the same in SAWLC and WLC
      * but I cant put it to Path:: because it would go out of scope
      */
-    int numSeg = (int) (in_pathLength / linDensity);
+    int numSeg = (int) in_pathLength;
     // check if numSegments is in valid range
     if (numSeg <3)
     {
@@ -234,9 +232,10 @@ SACollector::SACollector(int in_numPaths,
     {
         Eigen::Vector3d startDir(1.0,0.0,0.0);
         SAWLC * myChain = 
-            new SAWLC(numPaths, pathLength, linDensity[i], 
-                    persisLength[i], linkDiameter[i], segConvFactor,
-                    locPrecision, &startDir);
+            new SAWLC(pathLength[i],
+                      persisLength[i],
+                      linkDiameter[i], 
+                      &startDir);
 
         myChains.push_back(myChain);
     }

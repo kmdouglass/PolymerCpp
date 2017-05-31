@@ -25,65 +25,31 @@ static PyObject * getWLCrgs(PyObject *self, PyObject *args)
 	seedRandom();
 
 	//Parse input into parameters
-	int numPaths;
+        int    numPaths;
 	double pathLength;
-	double linDensity;
 	double persisLength;
-	double segConvFactor;
-	int alsoBumped;
-	double locPrecision;
-    if (!PyArg_ParseTuple(args, "iddddid", &numPaths, &pathLength,
-    	&linDensity, &persisLength, &segConvFactor, &alsoBumped,
-    	&locPrecision))
+    if (!PyArg_ParseTuple(args, "idd", &pathLength, &persisLength))
         return NULL;
 
-    /* Initialize pathLength vector. All paths have equal lengths because
-     * I didn't figure out how to parse a Python tuple of variable length
-     * into a C++ function.) */
-	vector<double> pathLengths(numPaths, pathLength);
     Eigen::Vector3d startDir(1.0,0.0,0.0);
     
     // Initialize the chain
-    WLC chain = WLC(numPaths, pathLengths, 
-                  linDensity, persisLength,
-                  segConvFactor, locPrecision, 
-                  &startDir);
+    WLC chain = WLC(pathLength, 
+                    persisLength,
+                    &startDir);
 
     // Initialize vectors for storing the gyration radii
     vector<double> results;
-    vector<double> resultsBumped;
 
     // Generate all chains and store the results of calculation
     for (unsigned int i=0; i<numPaths; i++)
     {
-    	chain.makePath(pathLengths.at(i));
+    	chain.makePath(pathLength);
     	results.push_back(chain.computeRg());
-    	if (alsoBumped)
-    	{
-    		chain.bumpPoints(locPrecision);
-    		resultsBumped.push_back(chain.computeRg());
-    	}
     }
 
-    /* If we also bumped the chain, concatenate the two results vectors,
-	 * and add a delimiting negative number between them. This should be
-	 * the only negative number in the results.
-	 */
-    if (alsoBumped)
-    {
-    	vector<double> resultsCombined;
-    	resultsCombined.reserve( results.size() + resultsBumped.size() + 1u); // preallocate memory
-		resultsCombined.insert( resultsCombined.end(), results.begin(), results.end() );
-		resultsCombined.push_back(-1.0); // delimiting negative number
-		resultsCombined.insert( resultsCombined.end(), resultsBumped.begin(), resultsBumped.end() );
-		return vectorToTuple_Float(resultsCombined);
-    }
-
-    // Else return just the un-bumped results.
-    else 
-    {
-    	return vectorToTuple_Float(results);
-    }
+    
+    return vectorToTuple_Float(results);
 }
 
 static PyObject * getWLC(PyObject *self, PyObject *args)
@@ -92,31 +58,17 @@ static PyObject * getWLC(PyObject *self, PyObject *args)
 
 	//Parse input
 	double pathLength;
-	double linDensity;
 	double persisLength;
-	double segConvFactor;
-	int bumped;
-	double locPrecision;
-    if (!PyArg_ParseTuple(args, "ddddid", &pathLength,
-    	&linDensity, &persisLength, &segConvFactor, &bumped,
-    	&locPrecision))
+    if (!PyArg_ParseTuple(args, "dd", &pathLength, &persisLength))
         return NULL;
 
-    // Same as previous function
-	vector<double> pathLengths(1, pathLength);
     Eigen::Vector3d startDir(1.0,0.0,0.0);
     
-    WLC chain = WLC(1, pathLengths, 
-                  linDensity, persisLength,
-                  segConvFactor, locPrecision, 
-                  &startDir);
+    WLC chain = WLC(pathLength, 
+                    persisLength,
+                    &startDir);
     chain.makePath(pathLength);
 
-
-    if (bumped)
-    {
-    	chain.bumpPoints(locPrecision);
-    }
 
     // Store all 3D vector coordinates in a single 1D vector (yikes)
     /* Format:
@@ -142,53 +94,28 @@ static PyObject * getSAWLCrgs(PyObject *self, PyObject *args)
 {
 	seedRandom();
 	//Parse input
-	int numPaths;
+        int numPaths;
 	double pathLength;
-	double linDensity;
 	double persisLength;
-	double segConvFactor;
-	int alsoBumped;
-	double locPrecision;
 	double linkDiameter;
-    if (!PyArg_ParseTuple(args, "iddddidd", &numPaths, &pathLength,
-    	&linDensity, &persisLength, &segConvFactor, &alsoBumped,
-    	&locPrecision, &linkDiameter))
+    if (!PyArg_ParseTuple(args, "iddd", &pathLength, &persisLength, &linkDiameter))
         return NULL;
 
-	vector<double> pathLengths(numPaths, pathLength);
     Eigen::Vector3d startDir(1.0,0.0,0.0);
     
-    SAWLC chain = SAWLC(numPaths, pathLengths, 
-                  linDensity, persisLength,
-                  linkDiameter,
-                  segConvFactor, locPrecision, 
-                  &startDir);
+    SAWLC chain = SAWLC(pathLength, 
+                        persisLength,
+                        linkDiameter,
+                        &startDir);
     vector<double> results;
-    vector<double> resultsBumped;
     for (unsigned int i=0; i<numPaths; i++)
     {
-    	chain.makePath(pathLengths.at(i));
+    	chain.makePath(pathLength);
     	results.push_back(chain.computeRg());
-    	if (alsoBumped)
-    	{
-    		chain.bumpPoints(locPrecision);
-    		resultsBumped.push_back(chain.computeRg());
-    	}
     };
 
-    if (alsoBumped)
-    {
-    	vector<double> resultsCombined;
-    	resultsCombined.reserve( results.size() + resultsBumped.size() + 1u); // preallocate memory
-		resultsCombined.insert( resultsCombined.end(), results.begin(), results.end() );
-		resultsCombined.push_back(-1.0); // delimiting negative number
-		resultsCombined.insert( resultsCombined.end(), resultsBumped.begin(), resultsBumped.end() );
-		return vectorToTuple_Float(resultsCombined);
-    }
-    else 
-    {
-    	return vectorToTuple_Float(results);
-    }
+    return vectorToTuple_Float(results);
+    
 }
 
 
@@ -199,31 +126,19 @@ static PyObject * getSAWLC(PyObject *self, PyObject *args)
 	seedRandom();
 	//Parse input
 	double pathLength;
-	double linDensity;
 	double persisLength;
-	double segConvFactor;
-	int bumped;
-	double locPrecision;
 	double linkDiameter;
-    if (!PyArg_ParseTuple(args, "ddddidd", &pathLength,
-    	&linDensity, &persisLength, &segConvFactor, &bumped,
-    	&locPrecision, &linkDiameter))
+    if (!PyArg_ParseTuple(args, "dddd", &pathLength,
+    	&persisLength, &linkDiameter))
         return NULL;
 
-	vector<double> pathLengths(1, pathLength);
     Eigen::Vector3d startDir(1.0,0.0,0.0);
     
-    SAWLC chain = SAWLC(1, pathLengths, 
-                  linDensity, persisLength,
-                  linkDiameter,
-                  segConvFactor, locPrecision, 
-                  &startDir);
+    SAWLC chain = SAWLC(pathLength, 
+                        persisLength,
+                        linkDiameter,
+                        &startDir);
     chain.makePath(pathLength);
-
-    if (bumped)
-    {
-    	chain.bumpPoints(locPrecision);
-    }
 
     vector<double> chainPoints;
     for (unsigned int j=0; j<chain.path.size(); j++)

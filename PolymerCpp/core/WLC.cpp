@@ -7,14 +7,11 @@ extern std::uniform_real_distribution<double> randUniformReal;
 extern std::normal_distribution<double> randNormalReal;
 
 
-WLC::WLC(int in_numPaths, vector<double> & in_pathLength, 
-                  double in_linDensity, double in_persisLength,
-                  double in_segConvFactor, double in_locPrecision, 
-                  Eigen::Vector3d * in_initPoint) 
-    : Path(in_numPaths, in_pathLength, in_linDensity,
-            in_segConvFactor, in_initPoint)
+WLC::WLC(double in_pathLength,
+          double in_persisLength, 
+          Eigen::Vector3d * in_initPoint) 
+    : Path(in_pathLength, in_initPoint)
 {
-    locPrecision = in_locPrecision;
     persisLength = in_persisLength;
 }
 
@@ -23,7 +20,7 @@ void WLC::makePath(double in_pathLength)
     /* this chunk of code is the same in SAWLC and WLC
      * but I cant put it to Path:: because it would go out of scope
      */
-    int numSegments = (int) (in_pathLength / linDensity);
+    int numSegments = (int) in_pathLength;
     // check if numSegments is in valid range
     if (numSegments < 1)
     {
@@ -33,11 +30,6 @@ void WLC::makePath(double in_pathLength)
             << "Why would you want such a short chain anyways?" << std::endl;
         throw std::out_of_range(buffer.str());
     }
-
-    // split numSegments into integer and leftover
-    // no leftover for the time being
-    int numSeg;
-    numSeg = (int)numSegments;
 
     double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
                                              : 0.0;
@@ -49,8 +41,8 @@ void WLC::makePath(double in_pathLength)
     double *angDisp = new double[numSegments];
     double *tanPlaneDisp = new double[numSegments];
 
-    //since we dont have to check for collisions,
-    //we can pre-generate all required random numbers
+    // Since we don't have to check for collisions,
+    // we can pre-generate all required random numbers
     for (int i=0; i<numSegments; i++)
     {
         if (sigma>0.001) 
@@ -74,7 +66,6 @@ void WLC::makePath(double in_pathLength)
         // Check if displacement and currPoint vectors are parallel
         // This should not happen (you would have to be extremely)
         // lucky to get exactly parallel vectors with double precision
-        int j=0;
         while (dispVector.squaredNorm()<0.01)
         {
             currPoint /= sqrt(currPoint.squaredNorm());
@@ -108,7 +99,7 @@ void WLC::makePath(double in_pathLength)
 
 double WLC::getTheoreticalRg()
 {
-    return theoreticalWLCRg(linDensity, persisLength, pathLength[0]);
+    return theoreticalWLCRg(persisLength, pathLength);
 }
 
 
@@ -127,9 +118,7 @@ WLCCollector::WLCCollector(int in_numPaths,
     {
         Eigen::Vector3d startDir(1.0,0.0,0.0);
         WLC * myChain = 
-            new WLC(numPaths, pathLength, linDensity[i], 
-                    persisLength[i], segConvFactor, locPrecision,
-                    &startDir);
+            new WLC(pathLength[i], persisLength[i], &startDir);
         myChains.push_back(myChain);
     }
 }

@@ -26,10 +26,10 @@ class SAWLC: public Path
 {
 public:
 	double defaultWeight; // always 1 in case of SAWLC
-	SAWLC(int in_numPaths, vector<double> & in_pathLength, 
-                  double in_linDensity, double in_persisLength,
-                  double in_linkDiameter, double in_segConvFactor, 
-                  double in_locPrecision, Eigen::Vector3d * in_initPoint);
+	SAWLC(double in_pathLength, 
+               double in_persisLength,
+               double in_linkDiameter, 
+               Eigen::Vector3d * in_initPoint);
 	/* Constructor */
 
 	void makePath(double in_pathLength);

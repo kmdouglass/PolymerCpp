@@ -8,10 +8,10 @@ using namespace std;
 class SAWLC_Rosenbluth: public SAWLC
 {
 public:
-	SAWLC_Rosenbluth(int in_numPaths, vector<double> & in_pathLength, 
-                  double in_linDensity, double in_persisLength,
-                  double in_linkDiameter, double in_segConvFactor, 
-                  double in_locPrecision, Eigen::Vector3d * in_initPoint);
+	SAWLC_Rosenbluth(double in_pathLength, 
+                        double in_persisLength,
+                        double in_linkDiameter,
+                        Eigen::Vector3d * in_initPoint);
   // Constructor.
 
 	double getDefaultWeight();
