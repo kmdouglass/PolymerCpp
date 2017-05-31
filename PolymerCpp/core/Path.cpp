@@ -55,7 +55,7 @@ void Path::makeNewPath(double in_pathLength)
 {
     int numSegments = (int) (in_pathLength / linDensity);
     /* The next block is for the case, when the path
-     * runs into a blind spot - after a lot of unsuccesful
+     * runs into a blind spot - after a lot of unsuccessful
      * attempts to get out of the spot, function returns
      * which just runs a new simulation.
      */
@@ -168,7 +168,7 @@ Collector::Collector(int in_numPaths,
                  double in_locPrecision /*optional*/,
                  bool in_fullSpecParam /*optional*/)
 {
-	pathLength = in_pathLength;
+    pathLength = in_pathLength;
     linDensity = in_linDensity;
     numPaths = in_numPaths;
     persisLength = in_persisLength;

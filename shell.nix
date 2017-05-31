@@ -12,5 +12,9 @@ with import <nixpkgs> {};
       
     };
 
-  in pkgs.python35.withPackages (ps: [ps.numpy ps.sphinx PolymerCpp])
+  in pkgs.python35.withPackages (ps: [ ps.numpy
+     				       ps.sphinx
+				       pkgs.ncurses
+				       pkgs.netbeans
+				       PolymerCpp])
 ).env

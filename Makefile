@@ -6,7 +6,7 @@ CC := g++
 SRCDIR := PolymerCpp/core
 BUILDDIR := build
 TARGETDIR := lib
-TARGET := $(TARGETDIR)/PolymerCpp.so
+TARGET := $(TARGETDIR)/PolymerCppCore.so
 
 SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
