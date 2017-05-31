@@ -12,7 +12,7 @@ source_files = ['{0:s}{1:s}'.format(source_dir, f)
                 for f in listdir(source_dir)
                 if f.endswith(source_ext)]
 
-module = Extension('PolymerCpp',
+module = Extension('PolymerCppCore',
                     define_macros = [('MAJOR_VERSION', '0'),
                                      ('MINOR_VERSION', '0')],
                     include_dirs = ['include/'],

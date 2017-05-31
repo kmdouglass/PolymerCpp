@@ -1,17 +1,19 @@
-import PolymerCpp
+import PolymerCppCore
 import numpy as np
 
 # These 2 functions return a chain with specified parameters in simulation units.
 def getCppWLC(pathLength=1000.0,
               linDensity=1.0,
               persisLength=1.0,
+              segConvFactor=1.0,
               bumped=False,
 	      locPrecision=0.0):
-	rawChain = np.array(PolymerCpp.getWLC(pathLength,
-                                              linDensity,
-                                              persisLength,
-                                              int(bumped),
-                                              locPrecision))
+	rawChain = np.array(PolymerCppCore.getWLC(pathLength,
+                                                  linDensity,
+                                                  persisLength,
+                                                  segConvFactor,
+                                                  int(bumped),
+                                                  locPrecision))
 	return np.reshape(rawChain, (-1,3))
 
 def getCppSAWLC(pathLength=1000.0,
@@ -21,13 +23,13 @@ def getCppSAWLC(pathLength=1000.0,
 		bumped=False,
 		locPrecision=0.0,
 		linkDiameter=0.5):
-	rawChain = np.array(PolymerCpp.getSAWLC(pathLength,
-                                                linDensity,
-                                                persisLength,
-                                                segConvFactor,
-                                                int(bumped),
-                                                locPrecision,
-                                                linkDiameter))
+	rawChain = np.array(PolymerCppCore.getSAWLC(pathLength,
+                                                    linDensity,
+                                                    persisLength,
+                                                    segConvFactor,
+                                                    int(bumped),
+                                                    locPrecision,
+                                                    linkDiameter))
 	return np.reshape(rawChain, (-1,3))
 
 
@@ -41,12 +43,12 @@ def getCppWLCradii(numPaths=1,
                    persisLength=1.0,
                    bumped= True,
                    locPrecision=0.0):
-	radii = np.array(PolymerCpp.getWLCrgs(numPaths,
-                                              pathLength,
-                                              linDensity,
-                                              persisLength,
-                                              int(bumped),
-                                              locPrecision))
+	radii = np.array(PolymerCppCore.getWLCrgs(numPaths,
+                                                  pathLength,
+                                                  linDensity,
+                                                  persisLength,
+                                                  int(bumped),
+                                                  locPrecision))
 	if not bumped:
 		return radii
 	else: #search for the delimiting value of -1
@@ -63,14 +65,14 @@ def getCppSAWLCradii(numPaths=1,
                      bumped=True,
                      locPrecision=0.0,
                      linkDiameter=0.5):
-	radii = np.array(PolymerCpp.getSAWLCrgs(numPaths,
-                                                pathLength,
-                                                linDensity,
-                                                persisLength,
-                                                segConvFactor,
-                                                int(bumped),
-                                                locPrecision,
-                                                linkDiameter))
+	radii = np.array(PolymerCppCore.getSAWLCrgs(numPaths,
+                                                    pathLength,
+                                                    linDensity,
+                                                    persisLength,
+                                                    segConvFactor,
+                                                    int(bumped),
+                                                    locPrecision,
+                                                    linkDiameter))
 	if not bumped:
 		return radii
 	else: #search for the delimiting value of -1

@@ -237,7 +237,7 @@ static PyObject * getSAWLC(PyObject *self, PyObject *args)
     return vectorToTuple_Float(chainPoints);
 } 
 
-static PyMethodDef PolymerCppMethods[] = 
+static PyMethodDef PolymerCppCoreMethods[] = 
 {
     {"getWLCrgs",  getWLCrgs, METH_VARARGS,
      "Get multiple WLC radii of gyration of certain parameters."},
@@ -250,19 +250,19 @@ static PyMethodDef PolymerCppMethods[] =
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-static struct PyModuleDef PolymerCpp =
+static struct PyModuleDef PolymerCppCore =
 {
     PyModuleDef_HEAD_INIT,
-    "PolymerCpp",
+    "PolymerCppCore",
     "",          /* module documentation, may be NULL */
     -1,          /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
-    PolymerCppMethods
+    PolymerCppCoreMethods
 };
 
 PyMODINIT_FUNC
-PyInit_PolymerCpp(void)
+PyInit_PolymerCppCore(void)
 {
-  return PyModule_Create(&PolymerCpp);
+  return PyModule_Create(&PolymerCppCore);
 }
 
 int main(int argc, char *argv[])
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
     }
 
     /* Add a built-in module, before Py_Initialize */
-    PyImport_AppendInittab("PolymerCpp", PyInit_PolymerCpp);
+    PyImport_AppendInittab("PolymerCppCore", PyInit_PolymerCppCore);
 
     /* Pass argv[0] to the Python interpreter */
     Py_SetProgramName(program);
@@ -285,7 +285,7 @@ int main(int argc, char *argv[])
     /* Optionally import the module; alternatively,
        import can be deferred until the embedded script
        imports it. */
-    PyImport_ImportModule("PolymerCpp");
+    PyImport_ImportModule("PolymerCppCore");
 
     PyMem_RawFree(program);
     return 0;
