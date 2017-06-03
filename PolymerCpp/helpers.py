@@ -66,6 +66,107 @@ def getCppSAWLC(pathLength=1000.0, persisLength=1.0, linkDiameter=0.5):
     rawChain = np.reshape(rawChain, (-1,3))
     return rawChain
 
+def radius_of_gyration(chain):
+    """Compute the radius of gyration of a chain.
+
+    This function computes the radius of gyration of a set of
+    points. The points are defined as a NumPy array where each row
+    corresponds to the Cartesian coordinate values and each column is
+    one of the principle directions.
+
+    Parameters
+    ----------
+    chain : array_like
+        A MxN array of numbers representing the Cartesian coordinates
+        of the points in the set where M is the number of points and
+        N is the number of dimensions.
+
+    Returns
+    -------
+    Rg : float
+        The radius of gyration of the chain.
+
+    """
+    secondMoments = np.var(chain, axis = 0)
+    Rg = (np.sum(secondMoments)) ** (0.5)
+
+    return Rg
+
+def end_to_end_distance(chain):
+    """Compute the end-to-end distance of a chain.
+
+    Parameters
+    ----------
+    chain : array_like
+        A MxN array of numbers representing the Cartesian coordinates
+        of the points in the set where M is the number of points and
+        N is the number of dimensions.
+
+    Returns
+    -------
+    R : float
+        The end-to-end distance of the chain.
+
+    """
+    R = np.linalg.norm(chain[-1,:] - chain[0,:])
+
+    return R
+
+def theory_Rg_WLC(contour_length, persistence_length):
+    """The mean squared radius of gyration of the wormlike chain.
+
+    Note that this returns the square root fo the mean squared radius
+    of gyration.
+
+    Parameters
+    ----------
+    contour_length : float
+        The total contour length of the chain
+    persistence length: float
+        The persistence length of the chain, which is related to the
+        chain's stiffness.
+
+    Returns
+    -------
+    Rg : float
+        The square root of the mean squared radius of gyration.
+    
+    """
+    term1 = contour_length * persistence_length / 3
+    term2 = persistence_length**2
+    term3 = 2 * persistence_length**3 / contour_length**2
+    term4 = persistence_length * (1 - np.exp(-contour_length / persistence_length))
+    Rg = np.sqrt(term1 - term2 + term3 * (contour_length - term4))
+    
+    return Rg
+
+def theory_R_WLC(contour_length, persistence_length):
+    """The mean squared end-to-end distance of the wormlike chain.
+
+    Note that this returns the square root fo the mean squared end-to-
+    end distance.
+
+    Parameters
+    ----------
+    contour_length : float
+        The total contour length of the chain
+    persistence length: float
+        The persistence length of the chain, which is related to the
+        chain's stiffness.
+
+    Returns
+    -------
+    R : float
+        The square root of the mean squared end-to-end distance.
+
+    """
+    term1 = 2 * persistence_length * contour_length
+    term2 = persistence_length / contour_length
+    term3 = 1 - np.exp(-contour_length / persistence_length)
+    R = np.sqrt(term1 * (1 - term2 * term3))
+
+    return R
+
 '''
 # These 2 functions return the gyration radius, you can get multiple
 # values at once, but not for different values of pathLength at the
