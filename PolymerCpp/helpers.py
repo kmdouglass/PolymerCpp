@@ -1,3 +1,11 @@
+"""Python wrappers to the C++ wormlike chain generation code.
+
+© All rights reserved. ECOLE POLYTECHNIQUE FEDERALE DE LAUSANNE,
+Switzerland, Laboratory of Experimental Biophysics, 2017
+See the LICENSE.txt file for more details.
+
+"""
+
 import PolymerCppCore
 import numpy as np
 
@@ -127,14 +135,14 @@ def end_to_end_distance(chain):
 def theory_Rg_WLC(contour_length, persistence_length):
     """The mean squared radius of gyration of the wormlike chain.
 
-    Note that this returns the square root fo the mean squared radius
+    Note that this returns the square root of the mean squared radius
     of gyration.
 
     Parameters
     ----------
     contour_length : float
         The total contour length of the chain
-    persistence length: float
+    persistence_length: float
         The persistence length of the chain, which is related to the
         chain's stiffness.
 
@@ -162,7 +170,7 @@ def theory_R_WLC(contour_length, persistence_length):
     ----------
     contour_length : float
         The total contour length of the chain
-    persistence length: float
+    persistence_length: float
         The persistence length of the chain, which is related to the
         chain's stiffness.
 
