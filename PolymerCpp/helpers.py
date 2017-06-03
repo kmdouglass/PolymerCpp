@@ -29,8 +29,14 @@ def getCppWLC(pathLength=1000.0, persisLength=1.0):
     (100, 3)
     
     """
-    rawChain = np.array(PolymerCppCore.getWLC(pathLength, persisLength))   
+    rawChain = np.array(PolymerCppCore.getWLC(pathLength, persisLength))
+
+    while np.isnan(rawChain).any():
+        # TODO: Fix NaN's in C++ code
+        rawChain = np.array(PolymerCppCore.getWLC(pathLength, persisLength))
+
     rawChain = np.reshape(rawChain, (-1, 3))
+
     return rawChain
 
 def getCppSAWLC(pathLength=1000.0, persisLength=1.0, linkDiameter=0.5):
@@ -63,7 +69,13 @@ def getCppSAWLC(pathLength=1000.0, persisLength=1.0, linkDiameter=0.5):
 
     """
     rawChain = np.array(PolymerCppCore.getSAWLC(pathLength, persisLength, linkDiameter))
+
+    while np.isnan(rawChain).any():
+        # TODO: Fix NaN's in C++ code
+        rawChain = np.array(PolymerCppCore.getSAWLC(pathLength, persisLength, linkDiameter))
+    
     rawChain = np.reshape(rawChain, (-1,3))
+
     return rawChain
 
 def radius_of_gyration(chain):
