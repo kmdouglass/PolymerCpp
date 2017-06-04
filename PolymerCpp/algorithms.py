@@ -1,0 +1,159 @@
+"""Tools to ensure the chain generation algorithms work as expected.
+
+© All rights reserved. ECOLE POLYTECHNIQUE FEDERALE DE LAUSANNE,
+Switzerland, Laboratory of Experimental Biophysics, 2017
+See the LICENSE.txt file for more details.
+
+"""
+
+import matplotlib
+matplotlib.use('tkagg')
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+import numpy as np
+from PolymerCpp.helpers import getCppWLC, radius_of_gyration
+from PolymerCpp.helpers import theory_Rg_WLC, theory_R_WLC, end_to_end_distance
+
+def verify_WLC(algorithm,
+               num_chains=10,
+               num_experiments=1000,
+               contour_length=1000,
+               persistence_length=50,
+               **kwargs):
+    """Compares outputs of a wormlike chain algorithm to theory.
+
+    This function performs two numerical experiments that verify the
+    accuracy of the simulations. In the first, it performs a number
+    `num_experiments` of experiments with `num_chains` realizations in
+    each experiment. The mean end-to-end distance and mean radius of
+    gyration is computed for each group and a histogram of the results
+    is displayed. The x-axis is the difference between the computed
+    mean and the theoretical mean.
+
+    In the second experiment, a number of chains equal to `num_chains`
+    are simulated for a range of chain contour lengths.  The mean
+    end-to-end distance and mean radius of gyration for each group is
+    then plotted vs. the contour length, along with the theoretical
+    predications. The error bars denote the standard deviation of the
+    group.
+
+    The mean value of all the end-to-end distances and radii of
+    gyration are output to the console.
+
+    Parameters
+    ----------
+    algorithm : func
+        The algorithm for generating a wormlike chain.
+    num_chains : int
+        The number of chains per numerical experiment to generate.
+    num_experiments : int
+        The number of experiments to perform for calculating the
+        mean-squared moments.
+    contour_length : float
+        The length of each chain in units of segments.
+    persistence_length : float
+        The persistence length of the wormlike chain in units of
+        chain segments.
+    kwargs : dict
+        A list of additional keyword arguments to pass to the
+        algorithm function.
+
+    Notes
+    -----
+    If a self-avoiding wormlike chain is provided as the argument to
+    `algorithm`, the results will be compared to the theory for the
+    infinitesimally thin wormlike chain.
+
+    """
+    
+    # Experiment 1: Compute mean squared radius of gyration
+    mean_rgs1 = np.zeros(num_experiments)
+    mean_rs1 = np.zeros(num_experiments)
+    for i in range(num_experiments):
+
+        rg = np.zeros(num_chains)
+        r  = np.zeros(num_chains)
+
+        # Generate the individual chains
+        for j in range(num_chains):
+
+            rawChain = algorithm(contour_length,
+                                 persistence_length,
+                                 **kwargs)
+            rg[j] = radius_of_gyration(rawChain)
+            r[j]  = end_to_end_distance(rawChain)
+
+        mean_rgs1[i] = np.mean(rg)
+        mean_rs1[i] = np.mean(r)
+
+    # Experiment 2: Scaling behavior
+    Lc = np.logspace(0, np.log10(contour_length))
+    mean_rgs2 = np.zeros(len(Lc))
+    std_rgs2  = np.zeros(len(Lc))
+
+    mean_rs2 = np.zeros(len(Lc))
+    std_rs2  = np.zeros(len(Lc))
+    for i in range(len(Lc)):
+
+        rg = np.zeros(num_chains)
+        r  = np.zeros(num_chains)
+        
+        for j in range(num_chains):
+            
+            rawChain = algorithm(Lc[i], persistence_length, **kwargs)
+            rg[j] = radius_of_gyration(rawChain)
+            r[j]  = end_to_end_distance(rawChain)
+
+        mean_rgs2[i] = np.mean(rg)
+        std_rgs2[i]  = np.std(rg)
+
+        mean_rs2[i] = np.mean(r)
+        std_rs2[i]  = np.std(r)
+
+    # Output results
+
+    theory_rg = theory_Rg_WLC(contour_length, persistence_length)
+    theory_r = theory_R_WLC(contour_length, persistence_length)
+
+    print('Experimental inputs')
+    print('-------------------')
+    print('Number of chains:\t\t{0:d}\nNumber of experiments:\t\t{1:d}'.format(num_chains, num_experiments))
+    print('Contour length (for moments):\t{0:d}\npersistence length:\t\t{1:0.4f}'.format(contour_length, persistence_length))
+    print('')
+    print('Outputs')
+    print('-------')
+    print('Calculated <R>:\t\t\t{0:.4f}\nTheoretical WLC <R>:\t\t{1:.4f}'.format(np.mean(mean_rs1), theory_r))
+    print('')
+    print('Calculated <Rg>:\t\t{0:.4f}\nTheoretical WLC <Rg>:\t\t{1:.4f}'.format(np.mean(mean_rgs1), theory_rg))
+    
+    # Plot results
+    fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2, figsize=(9, 5))
+    
+    ax0.hist(mean_rs1 - theory_r, bins=50, label=r'$ \langle R^2 \rangle^{1/2} $')
+    ax0.hist(mean_rgs1 - theory_rg, bins=50, label=r'$ \langle R_g^2 \rangle^{1/2} $')
+    ax0.set_title('Moments')
+    ax0.set_xlabel(r'$ \Delta \langle R^2 \rangle^{1/2} , \, \Delta \langle R_g^2 \rangle^{1/2} } $')
+    ax0.set_ylabel('Frequency')
+    ax0.legend()
+
+    ax1.errorbar(Lc, mean_rs2, yerr=std_rs2, fmt='o', label=r'$ \langle R^2 \rangle_{numeric} $', markersize=2)
+    ax1.errorbar(Lc, mean_rgs2, yerr=std_rgs2, fmt='o', label=r'$ \langle R_g^2 \rangle_{numeric} $', markersize=2)
+    ax1.plot(Lc, theory_R_WLC(Lc, persistence_length), ':k', label=r'WLC $ \langle R^2 \rangle_{theory} $')
+    ax1.plot(Lc, theory_Rg_WLC(Lc, persistence_length), '--k', label=r'WLC $ \langle R_g^2 \rangle_{theory} $')
+    ax1.set_title('Scaling behavior')
+    ax1.set_xlabel('Contour length')
+    ax1.set_yscale('log')
+    ax1.legend()
+
+    for ax in (ax0, ax1):
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.yaxis.set_ticks_position('left')
+        ax.xaxis.set_ticks_position('bottom')
+        
+    plt.show()
+
+if __name__ == '__main__':
+    from PolymerCpp.helpers import getCppWLC
+    verify_WLC(getCppWLC)
