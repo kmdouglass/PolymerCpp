@@ -22,6 +22,10 @@ and [Kyle M. Douglass](https://github.com/kmdouglass) in the
 [Laboratory of Experimental Biophysics](http://leb.epfl.ch/) for
 modeling DNA.
 
+# Documentation
+
+PolymerCpp documentation may be found at http://polymercpp.readthedocs.io/en/latest/
+
 # License
 
 PolymerCpp is licensed under the GNU General Public License,
