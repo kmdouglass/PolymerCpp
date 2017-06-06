@@ -44,7 +44,12 @@ Installation
 Nix
 +++
 
-Activate an interactive shell with Python and the PolymerCpp package::
+Install PolymerCpp into your current profile::
+
+  nix-env -f PolymerCpp.nix -i '.*'
+
+Activate an interactive shell with Python and the PolymerCpp package
+without actually installing PolymerCpp::
 
   nix-shell shell.nix --pure
 
