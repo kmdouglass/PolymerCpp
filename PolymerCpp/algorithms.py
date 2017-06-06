@@ -84,11 +84,11 @@ def verify_WLC(algorithm,
             rg[j] = radius_of_gyration(rawChain)
             r[j]  = end_to_end_distance(rawChain)
 
-        mean_rgs1[i] = np.mean(rg)
-        mean_rs1[i] = np.mean(r)
+        mean_rgs1[i] = np.sqrt(np.mean(rg**2))
+        mean_rs1[i] = np.sqrt(np.mean(r**2))
 
     # Experiment 2: Scaling behavior
-    Lc = np.logspace(0, np.log10(contour_length))
+    Lc = np.round(np.logspace(0, np.log10(contour_length)))
     mean_rgs2 = np.zeros(len(Lc))
     std_rgs2  = np.zeros(len(Lc))
 
@@ -105,10 +105,10 @@ def verify_WLC(algorithm,
             rg[j] = radius_of_gyration(rawChain)
             r[j]  = end_to_end_distance(rawChain)
 
-        mean_rgs2[i] = np.mean(rg)
+        mean_rgs2[i] = np.sqrt(np.mean(rg**2))
         std_rgs2[i]  = np.std(rg)
 
-        mean_rs2[i] = np.mean(r)
+        mean_rs2[i] = np.sqrt(np.mean(r**2))
         std_rs2[i]  = np.std(r)
 
     # Output results
@@ -143,6 +143,7 @@ def verify_WLC(algorithm,
     ax1.plot(Lc, theory_Rg_WLC(Lc, persistence_length), '--k', label=r'WLC $ \langle R_g^2 \rangle_{theory} $')
     ax1.set_title('Scaling behavior')
     ax1.set_xlabel('Contour length')
+    ax1.set_xscale('log')
     ax1.set_yscale('log')
     ax1.legend()
 

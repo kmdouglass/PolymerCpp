@@ -31,8 +31,6 @@ void WLC::makePath(double in_pathLength)
         throw std::out_of_range(buffer.str());
     }
 
-    double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
-                                             : 0.0;
     Eigen::Vector3d currPoint = initPoint;
     Eigen::Vector3d dispVector, nextPoint;
     double projDistance;
@@ -45,10 +43,7 @@ void WLC::makePath(double in_pathLength)
     // we can pre-generate all required random numbers
     for (int i=0; i<numSegments; i++)
     {
-        if (sigma>0.001) 
-            angDisp[i] = sigma * randNormalReal(randGenerator);
-        else
-            angDisp[i] = 2*pi*randUniformReal(randGenerator);
+        angDisp[i] = pow(-2.0 / persisLength * log(1 - randUniformReal(randGenerator)), 0.5);
         tanPlaneDisp[i] = sin(angDisp[i]);
     }
     // Create random vectors uniformly sampled from the unit sphere
