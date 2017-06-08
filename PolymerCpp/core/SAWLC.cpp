@@ -31,13 +31,15 @@ void SAWLC::makePath(double in_pathLength)
     /* this chunk of code is the same in SAWLC and WLC
      * but I cant put it to Path:: because it would go out of scope
      */
-    int numSeg = (int) in_pathLength;
-    // check if numSegments is in valid range
-    if (numSeg <3)
+    
+    // Add one because two vertices = one segment
+    int numVerts = (int) in_pathLength + 1;
+    // check if numVerts is in valid range
+    if (numVerts <3)
     {
         std::stringstream buffer;
         buffer << "The number of segments must be greater than 3, but a "
-            << "value of " << numSeg << "was supplied. "
+            << "value of " << numVerts << "was supplied. "
             << "Why would you want such a short chain anyways?" << std::endl;
         throw std::out_of_range(buffer.str());
     }
@@ -50,16 +52,16 @@ void SAWLC::makePath(double in_pathLength)
     double projDistance;
 
     // Primary iterative loop for creating the chain
-    vector<Eigen::Vector3d> workingPath(numSeg, Eigen::Vector3d::Constant(0.0));
-    vector<Eigen::Vector3d> cumulativePath(numSeg, Eigen::Vector3d::Constant(0.0));
+    vector<Eigen::Vector3d> workingPath(numVerts, Eigen::Vector3d::Constant(0.0));
+    vector<Eigen::Vector3d> cumulativePath(numVerts, Eigen::Vector3d::Constant(0.0));
     workingPath[1] = initPoint;
     cumulativePath[1] = initPoint;
-    vector<double> stepWeights(numSeg,0.0);
+    vector<double> stepWeights(numVerts,0.0);
     stepWeights[0] = 1.0; stepWeights[1] = defaultWeight;
     vector<int> collisionPositions;
     double angDisp, tanPlaneDisp;
     Eigen::Vector3d * randVec = NULL;
-    for (int i=2; i<numSeg; i++)
+    for (int i=2; i<numVerts; i++)
     {
         // Scan the chain for possible collisions and save them to colPos vector
         getPossibleCollisions(cumulativePath, collisionPositions, i);
@@ -105,7 +107,7 @@ void SAWLC::makePath(double in_pathLength)
 
     // copy final vector to path
     path.clear();
-    for (int i=0; i<numSeg; i++)
+    for (int i=0; i<numVerts; i++)
     {
         path.push_back(cumulativePath[i]);
     }
