@@ -13,7 +13,10 @@ class ChainGenerationTest(unittest.TestCase):
         """Basic unittest for method getCppWLC.
 
         """
-        chain = getCppWLC()
+        pathLength = 50
+        chain      = getCppWLC(pathLength=pathLength)
+
+        self.assertEqual(chain.shape, (51, 3))
     
 if __name__ == '__main__':
     unittest.main()

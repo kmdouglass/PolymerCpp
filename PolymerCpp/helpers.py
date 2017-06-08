@@ -16,7 +16,7 @@ def getCppWLC(pathLength=1000.0, persisLength=1.0):
     ----------
     pathLength : float
         The length of the chain in atomic units, e.g. atoms,
-        molecules, or basepairs.
+        molecules, base pairs, or segments.
     persisLength : float
         The persistence length of the chain in units of distance.
 
@@ -34,7 +34,7 @@ def getCppWLC(pathLength=1000.0, persisLength=1.0):
 
     >>> chain = getCppWLC(pathLength=100, persisLength=10)
     >>> print(chain.shape)
-    (100, 3)
+    (101, 3)
     
     """
     rawChain = np.array(PolymerCppCore.getWLC(pathLength, persisLength))
@@ -54,7 +54,7 @@ def getCppSAWLC(pathLength=1000.0, persisLength=1.0, linkDiameter=0.5):
     ----------
     pathLength : float
         The length of the chain in atomic units, e.g. atoms,
-        molecules, or basepairs.
+        molecules base pairs, or segments.
     persisLength : float
         The persistence length of the chain in units of distance.
 
@@ -73,7 +73,7 @@ def getCppSAWLC(pathLength=1000.0, persisLength=1.0, linkDiameter=0.5):
 
     >>> chain = getCppSAWLC(pathLength=100, persisLength=10, linkDiameter=0.5)
     >>> print(chain.shape)
-    (100, 3)
+    (101, 3)
 
     """
     rawChain = np.array(PolymerCppCore.getSAWLC(pathLength, persisLength, linkDiameter))

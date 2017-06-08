@@ -20,44 +20,43 @@ void WLC::makePath(double in_pathLength)
     /* this chunk of code is the same in SAWLC and WLC
      * but I cant put it to Path:: because it would go out of scope
      */
-    int numSegments = (int) in_pathLength;
-    // check if numSegments is in valid range
-    if (numSegments < 1)
+    
+    // Add one because two vertices = one segment
+    int numVerts = (int) in_pathLength + 1;
+    // check if numVerts is in valid range
+    if (numVerts < 1)
     {
         std::stringstream buffer;
         buffer << "The number of segments must be greater than 3, but a "
-            << "value of " << numSegments << "was supplied. "
+            << "value of " << numVerts << "was supplied. "
             << "Why would you want such a short chain anyways?" << std::endl;
         throw std::out_of_range(buffer.str());
     }
 
-    double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
-                                             : 0.0;
     Eigen::Vector3d currPoint = initPoint;
     Eigen::Vector3d dispVector, nextPoint;
     double projDistance;
 
     // Create the displacement distances in the tangent planes
-    double *angDisp = new double[numSegments];
-    double *tanPlaneDisp = new double[numSegments];
+    double *angDisp = new double[numVerts];
+    double *tanPlaneDisp = new double[numVerts];
 
     // Since we don't have to check for collisions,
     // we can pre-generate all required random numbers
-    for (int i=0; i<numSegments; i++)
+    for (int i=0; i<numVerts; i++)
     {
-        if (sigma>0.001) 
-            angDisp[i] = sigma * randNormalReal(randGenerator);
-        else
-            angDisp[i] = 2*pi*randUniformReal(randGenerator);
+        angDisp[i] = pow(-2.0 / persisLength * log(1 - randUniformReal(randGenerator)), 0.5);
         tanPlaneDisp[i] = sin(angDisp[i]);
     }
     // Create random vectors uniformly sampled from the unit sphere
     Eigen::Vector3d * randVecs;
-    randVecs = randPointSphere(numSegments); // don't forget to delete after
+    randVecs = randPointSphere(numVerts); // don't forget to delete after
 
     // Primary iterative loop for creating the chain
-    Eigen::Vector3d * workingPath = new Eigen::Vector3d[numSegments];
-    for (int i=1; i<numSegments; i++)
+    Eigen::Vector3d * workingPath = new Eigen::Vector3d[numVerts];
+    workingPath[0] = Eigen::Vector3d(0.0, 0.0, 0.0);
+    workingPath[1] = initPoint;
+    for (int i=2; i<numVerts; i++)
     {
         // Create a displacement in the plane tangent to currPoint
         dispVector = currPoint.cross(randVecs[i]);
@@ -88,7 +87,7 @@ void WLC::makePath(double in_pathLength)
 
     // Add up the vectors in path to create the polymer
     path[0] = workingPath[0];
-    for (int i=1; i<numSegments; i++)
+    for (int i=1; i<numVerts; i++)
     {
         path.push_back(workingPath[i] + path[i-1]);
     }
