@@ -88,7 +88,7 @@ def verifyWLC(algorithm,
         mean_rs1[i] = np.sqrt(np.mean(r**2))
 
     # Experiment 2: Scaling behavior
-    Lc = np.round(np.logspace(0.5, np.log10(pathLength)))
+    Lc = np.round(np.logspace(0, np.log10(pathLength)))
     mean_rgs2 = np.zeros(len(Lc))
     std_rgs2  = np.zeros(len(Lc))
 
