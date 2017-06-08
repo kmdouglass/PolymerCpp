@@ -203,7 +203,7 @@ distribution for the zenith angle between segments.
 
 .. math::
    
-   p \left( \theta \right) = a \exp \left( \frac{a \theta^2}{2} \right) \times \theta
+   p \left( \theta \right) = a \exp \left( \frac{-a \theta^2}{2} \right) \times \theta
 
 In the simulation, the chain is created by simulating a random walk on
 the surface of the unit sphere. The walk begins at a predefined point
