@@ -20,4 +20,4 @@ All notable changes to this project will be documented in this file.
 - Fixed off-by-one error in the wormlike chain generation code.
 - Errors in computation of chain statistics
 
-[Unreleased]: https://github.com/kmdouglass/PolymerCpp/compare/v0.0.0...v0.0.1
+[v0.0.1]: https://github.com/kmdouglass/PolymerCpp/compare/v0.0.0...v0.0.1
