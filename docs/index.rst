@@ -216,7 +216,7 @@ plane is calculated by taking the *sine* of a random variate
 
 .. math::
 
-   \theta = \sqrt{\frac{-2}{a} \ln \left( 1 - X \right)}
+   \theta = \sqrt{ - \frac{2}{a} \ln \left( 1 - X \right)}
 
 where :math:`X` is a random variate uniformly distributed between 0
 and 1. This transformation produces random numbers with a p.d.f. for
@@ -244,7 +244,15 @@ is
    \ell_p = \frac{1}{1 - L \left( a \right) }
 
 where :math:`L \left( a \right)` is the `Langevin function
-<https://en.wikipedia.org/wiki/Brillouin_and_Langevin_functions#Langevin_function>`_.
+<https://en.wikipedia.org/wiki/Brillouin_and_Langevin_functions#Langevin_function>`_. With
+the equivalence :math:`a = \ell_p`, we now have an expression for
+obtaining a random number that represents the zenith angle between
+segments in terms of the chain's persistence length. This is the main
+result of this discussion.
+
+.. math::
+
+   \theta = \sqrt{ - \frac{2}{\ell_p} \ln \left( 1 - X \right)}
 
 This algorithm generates an infinitesimally thin wormlike chain
 because no collision checking is performed.
