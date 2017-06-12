@@ -76,13 +76,23 @@ def getCppSAWLC(pathLength=1000.0, persisLength=1.0, linkDiameter=0.5):
     (101, 3)
 
     """
-    rawChain = np.array(PolymerCppCore.getSAWLC(pathLength, persisLength, linkDiameter))
+    # Prevents exit of the Python interpreter if pathLength < 3 in C++ code
+    if pathLength < 3:
+        pathLengthCpp = 3
+    else:
+        pathLengthCpp = pathLength
+
+    rawChain = np.array(PolymerCppCore.getSAWLC(pathLengthCpp,
+                                                persisLength,
+                                                linkDiameter))
 
     while np.isnan(rawChain).any():
         # TODO: Fix NaN's in C++ code
-        rawChain = np.array(PolymerCppCore.getSAWLC(pathLength, persisLength, linkDiameter))
+        rawChain = np.array(PolymerCppCore.getSAWLC(pathLengthCpp,
+                                                    persisLength,
+                                                    linkDiameter))
     
-    rawChain = np.reshape(rawChain, (-1,3))
+    rawChain = np.reshape(rawChain, (-1,3))[0:pathLength + 1, :]
 
     return rawChain
 

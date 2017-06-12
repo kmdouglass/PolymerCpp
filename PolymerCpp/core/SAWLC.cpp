@@ -43,10 +43,6 @@ void SAWLC::makePath(double in_pathLength)
             << "Why would you want such a short chain anyways?" << std::endl;
         throw std::out_of_range(buffer.str());
     }
-    // If persistence length is 0, sigma is set to 0
-    // to mark that uniform number generation should be used
-    double sigma = abs(persisLength)>0.00001 ? pow(2.0 / persisLength, 0.5) 
-                                             : 0.0;
     Eigen::Vector3d currPoint = initPoint;
     Eigen::Vector3d dispVector, nextPoint;
     double projDistance;
@@ -73,11 +69,10 @@ void SAWLC::makePath(double in_pathLength)
         // keep generating vectors until you get one which is ok
         {
             j++;
-            if (sigma>0.00001) 
-                angDisp = sigma * randNormalReal(randGenerator);
-            else
-                angDisp = 2*pi*randUniformReal(randGenerator);
+            
+            angDisp = pow(-2.0 / persisLength * log(1 - randUniformReal(randGenerator)), 0.5);
             tanPlaneDisp = sin(angDisp);
+            
             randVec = randPointSphere();
             dispVector = randVec->cross(currPoint);
             dispVector /= sqrt(dispVector.squaredNorm());

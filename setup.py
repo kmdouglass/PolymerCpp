@@ -20,7 +20,7 @@ module = Extension('PolymerCppCore',
                     extra_compile_args = ['-std=c++11','-O2', '-fPIC'])
 
 config={'name': 'PolymerCpp',
-        'version': '0.0.0',
+        'version': '0.0.1',
         'description': 'A 3D wormlike chain algorithm written in C++',
         'author': 'Marcel Stefko, Kyle M. Douglass',
         'author_email': 'marcel.stefko@epfl.ch, kyle.m.douglass@gmail.com',
