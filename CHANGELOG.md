@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [v0.1.1]
+### Added
+- Additional fields for PyPI support were added to the setup.py file.
+
+### Fixed
+- Fixed typos in the version numbers in various files.
+
 ## [v0.1.0]
 ### Added
 - A method `getCppWLC2D` was added to helpers.py for generating
@@ -25,5 +32,6 @@ All notable changes to this project will be documented in this file.
 - Fixed off-by-one error in the wormlike chain generation code.
 - Errors in computation of chain statistics
 
+[v0.1.1]: https://github.com/kmdouglass/PolymerCpp/compare/v0.1.0...v0.1.1
 [v0.1.0]: https://github.com/kmdouglass/PolymerCpp/compare/v0.0.1...v0.1.0
 [v0.0.1]: https://github.com/kmdouglass/PolymerCpp/compare/v0.0.0...v0.0.1
