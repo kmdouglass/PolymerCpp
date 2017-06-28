@@ -4,7 +4,7 @@ with import <nixpkgs> {};
 
     PolymerCpp = pkgs.python35Packages.buildPythonPackage rec {
       name = "PolymerCpp-${version}";
-      version = "0.1.2";
+      version = "0.1.3";
 
       src = ./.;
 

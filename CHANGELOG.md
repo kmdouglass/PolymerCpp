@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## [v0.1.3]
+### Fixed
+- Fixed a bug in calculating the theoretical end-to-end distance of 3D
+  wormlike chains.
+	
 ## [v0.1.2]
 ### Fixed
 - Fixed a typo in the MANIFEST.in file that caused the header files
@@ -37,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - Fixed off-by-one error in the wormlike chain generation code.
 - Errors in computation of chain statistics
 
+[v0.1.3]: https://github.com/kmdouglass/PolymerCpp/compare/v0.1.2...v0.1.3
 [v0.1.2]: https://github.com/kmdouglass/PolymerCpp/compare/v0.1.1...v0.1.2
 [v0.1.1]: https://github.com/kmdouglass/PolymerCpp/compare/v0.1.0...v0.1.1
 [v0.1.0]: https://github.com/kmdouglass/PolymerCpp/compare/v0.0.1...v0.1.0

@@ -242,13 +242,13 @@ def theory_R_WLC(contour_length, persistence_length, dim=3):
     if dim == 2:
         term1 = 4 * persistence_length * contour_length
         term2 = 2 * persistence_length / contour_length
+        term3 = 1 - np.exp(-contour_length / 2 / persistence_length)
     elif dim == 3:
         term1 = 2 * persistence_length * contour_length
         term2 = persistence_length / contour_length
+        term3 = 1 - np.exp(-contour_length / persistence_length)
     else:
         raise ValueError('dim must be either 2 or 3. {} was supplied'.format(dim))
-
-    term3 = 1 - np.exp(-contour_length / 2 / persistence_length)
             
     R = np.sqrt(term1 * (1 - term2 * term3))
 
