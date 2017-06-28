@@ -41,6 +41,13 @@ User Guide
 Installation
 ------------
 
+PyPI
+++++
+
+Use pip to install PolymerCpp::
+
+  pip install PolymerCpp
+
 Nix
 +++
 
@@ -48,8 +55,7 @@ Install PolymerCpp into your current profile::
 
   nix-env -f PolymerCpp.nix -i '.*'
 
-Activate an interactive shell with Python and the PolymerCpp package
-without actually installing PolymerCpp::
+Activate an interactive shell with Python and the PolymerCpp package::
 
   nix-shell shell.nix --pure
 
