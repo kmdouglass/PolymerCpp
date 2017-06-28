@@ -2,7 +2,7 @@ with import <nixpkgs> {};
 
 pkgs.python35Packages.buildPythonPackage rec {
   name = "PolymerCpp-${version}";
-  version = "0.0.1";
+  version = "0.1.1";
 
   src = ./.;
 
@@ -12,7 +12,7 @@ pkgs.python35Packages.buildPythonPackage rec {
   ];
 
   meta = {
-    description = "3D wormlike chain generator for Python and written in C++";
-    homepage = "https://github.com/MStefko/PolymerCpp";
+    description = "2D and 3D wormlike chain generator for Python and written in C++";
+    homepage = "https://github.com/kmdouglass/PolymerCpp";
   };
 }
