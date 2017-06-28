@@ -12,6 +12,7 @@
 using namespace std;
 
 #include "WLC.h"
+#include "WLC2D.h"
 #include "SAWLC.h"
 #include "SAWLC_Rosenbluth.h"
 #include "PyUtils.h"
@@ -84,9 +85,41 @@ static PyObject * getWLC(PyObject *self, PyObject *args)
     }
     // Let Python deal with reshaping the array back.
     return vectorToTuple_Float(chainPoints);
-} 
+}
 
-
+static PyObject * getWLC2D(PyObject *self, PyObject *args)
+{
+    seedRandom();
+    
+    int pathLength;
+    double persisLength;
+    if (!PyArg_ParseTuple(args, "id", &pathLength, &persisLength)) {
+        return NULL;
+    }
+    
+    Eigen::Vector2d startDir(1.0, 0.0);
+    
+    WLC2D chain = WLC2D(pathLength,
+                        persisLength,
+                        &startDir);
+    chain.makePath(pathLength);
+    
+    // Store all 2D vector coordinates in a single 1D vector
+    /* Format:
+     * (1x, 1y, 2x, 2y, 3x, 3y, ...)
+     */
+    vector<double> chainPoints;
+    for (unsigned int j=0; j<chain.path.size(); j++)
+    {
+    	for (unsigned int i = 0; i < 2; i++)
+    	{
+    		chainPoints.push_back(chain.path.at(j)[i]);
+    	}
+    }
+    // Let Python deal with reshaping the array back.
+    return vectorToTuple_Float(chainPoints);
+    
+}
 
 static PyObject * getSAWLCrgs(PyObject *self, PyObject *args)
 // Same as getWLCrgs, just added another input parameter - linkDiameter, and
@@ -108,7 +141,7 @@ static PyObject * getSAWLCrgs(PyObject *self, PyObject *args)
                         linkDiameter,
                         &startDir);
     vector<double> results;
-    for (unsigned int i=0; i<numPaths; i++)
+    for (unsigned int i=0; i < numPaths; i++)
     {
     	chain.makePath(pathLength);
     	results.push_back(chain.computeRg());
@@ -154,10 +187,12 @@ static PyObject * getSAWLC(PyObject *self, PyObject *args)
 static PyMethodDef PolymerCppCoreMethods[] = 
 {
     {"getWLCrgs",  getWLCrgs, METH_VARARGS,
-     "Get multiple WLC radii of gyration of certain parameters."},
+     "Generate an infinitesimally-thin wormlike chain in three dimensions."},
     {"getWLC",  getWLC, METH_VARARGS,
      "Get the whole chain of certain parameters."},
-     {"getSAWLCrgs",  getSAWLCrgs, METH_VARARGS,
+    {"getWLC2D", getWLC2D, METH_VARARGS,
+     "Generate an infinitesimally-thin wormlike chain in two dimensions."}, 
+    {"getSAWLCrgs",  getSAWLCrgs, METH_VARARGS,
      "Get multiple SAWLC radii of gyration of certain parameters."},
     {"getSAWLC",  getSAWLC, METH_VARARGS,
      "Get the whole self-avoiding chain of certain parameters."},

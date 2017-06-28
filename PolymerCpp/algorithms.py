@@ -101,7 +101,7 @@ def verifyWLC(algorithm,
         
         for j in range(numChains):
             
-            rawChain = algorithm(Lc[i], persisLength, **kwargs)
+            rawChain = algorithm(int(Lc[i]), persisLength, **kwargs)
             rg[j] = radius_of_gyration(rawChain)
             r[j]  = end_to_end_distance(rawChain)
 
@@ -111,15 +111,19 @@ def verifyWLC(algorithm,
         mean_rs2[i] = np.sqrt(np.mean(r**2))
         std_rs2[i]  = np.std(r)
 
-    # Output results
 
-    theory_rg = theory_Rg_WLC(pathLength, persisLength)
-    theory_r = theory_R_WLC(pathLength, persisLength)
+    # Get the chain dimension
+    dim = rawChain.shape[1]
+        
+    # Output results
+    theory_rg = theory_Rg_WLC(pathLength, persisLength, dim=dim)
+    theory_r = theory_R_WLC(pathLength, persisLength, dim=dim)
 
     print('Experimental inputs')
     print('-------------------')
     print('Number of chains:\t\t{0:d}\nNumber of experiments:\t\t{1:d}'.format(numChains, numExperiments))
     print('Contour length (for moments):\t{0:d}\npersistence length:\t\t{1:0.4f}'.format(pathLength, persisLength))
+    print('Chain dimension:\t\t{0:d}'.format(dim))
     print('')
     print('Outputs')
     print('-------')
@@ -139,8 +143,8 @@ def verifyWLC(algorithm,
 
     ax1.errorbar(Lc, mean_rs2, yerr=std_rs2, fmt='o', label=r'$ \langle R^2 \rangle_{numeric} $', markersize=2)
     ax1.errorbar(Lc, mean_rgs2, yerr=std_rgs2, fmt='o', label=r'$ \langle R_g^2 \rangle_{numeric} $', markersize=2)
-    ax1.plot(Lc, theory_R_WLC(Lc, persisLength), ':k', label=r'WLC $ \langle R^2 \rangle_{theory} $')
-    ax1.plot(Lc, theory_Rg_WLC(Lc, persisLength), '--k', label=r'WLC $ \langle R_g^2 \rangle_{theory} $')
+    ax1.plot(Lc, theory_R_WLC(Lc, persisLength, dim=dim), ':k', label=r'WLC $ \langle R^2 \rangle_{theory} $')
+    ax1.plot(Lc, theory_Rg_WLC(Lc, persisLength, dim=dim), '--k', label=r'WLC $ \langle R_g^2 \rangle_{theory} $')
     ax1.set_title('Scaling behavior')
     ax1.set_xlabel('Contour length')
     ax1.set_xscale('log')
