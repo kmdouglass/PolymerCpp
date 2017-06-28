@@ -2,7 +2,7 @@
 # Switzerland, Laboratory of Experimental Biophysics, 2017
 # See the LICENSE.txt file for more details.
 
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 from os.path import join
 from os import listdir
 
@@ -21,12 +21,12 @@ module = Extension('PolymerCppCore',
                     extra_compile_args = ['-std=c++11','-O2', '-fPIC'])
 
 config={'name': 'PolymerCpp',
-        'version': '0.1.1',
+        'version': '0.1.2',
         'description': '2D and 3D wormlike chain generator for Python and written in C++',
         'author': 'Kyle M. Douglass, Marcel Stefko',
         'author_email': 'kyle.m.douglass@gmail.com',
         'url': 'https://github.com/kmdouglass/PolymerCpp',
-        'download_url': 'https://github.com/kmdouglass/PolymerCpp/archive/v0.1.1.tar.gz',
+        'download_url': 'https://github.com/kmdouglass/PolymerCpp/archive/v0.1.2.tar.gz',
         'keywords': ['polymer', 'wormlike chain', 'random walk'],
         'classifiers': ['Topic :: Scientific/Engineering :: Physics',
                         'Programming Language :: Python :: 3',
