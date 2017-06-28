@@ -26,6 +26,9 @@ modeling DNA.
 
 PolymerCpp documentation may be found at http://polymercpp.readthedocs.io/en/latest/
 
+**Important Note:** The PolymerCpp API is not yet fixed and may change
+  between versions.
+
 # License
 
 PolymerCpp is licensed under the GNU General Public License,
