@@ -18,7 +18,8 @@ def getCppWLC(pathLength=1000.0, persisLength=1.0):
         The length of the chain in atomic units, e.g. atoms,
         molecules, base pairs, or segments.
     persisLength : float
-        The persistence length of the chain in units of distance.
+        The persistence length of the chain in units of chain
+        segments.
 
     Returns
     -------
@@ -40,10 +41,47 @@ def getCppWLC(pathLength=1000.0, persisLength=1.0):
     rawChain = np.array(PolymerCppCore.getWLC(pathLength, persisLength))
 
     while np.isnan(rawChain).any():
-        # TODO: Fix NaN's in C++ code
         rawChain = np.array(PolymerCppCore.getWLC(pathLength, persisLength))
 
     rawChain = np.reshape(rawChain, (-1, 3))
+
+    return rawChain
+
+def getCppWLC2D(pathLength=1000, persisLength=1.0):
+    """Create a infinitesimally-thin wormlike chain in two dimensions.
+
+    Parameters
+    ----------
+    pathLength : int
+        The length of the chain in atomic units, e.g. atoms,
+        molecules, base pairs, or segments.
+    persisLength : float
+        The persistence length of the chain in units of chain
+        segments.
+
+    Returns
+    -------
+    rawChain : array_like
+
+    Examples
+    --------
+    Generates a single 2D WLC with 50 segments (51 vertices) and a
+    persistence length of 10 segments.
+
+    >>> chain = getCppWLC2D(pathLength=50, persisLength=10)
+    >>> print(chain.shape)
+    (51, 2)
+    
+    """
+    rawChain = np.array(PolymerCppCore.getWLC2D(
+        pathLength, persisLength))
+
+    while np.isnan(rawChain).any():
+        rawChain = np.array(PolymerCppCore.getWLC2D(
+            pathLength,
+            persisLength))
+
+    rawChain = np.reshape(rawChain, (-1, 2))
 
     return rawChain
 
@@ -142,7 +180,7 @@ def end_to_end_distance(chain):
 
     return R
 
-def theory_Rg_WLC(contour_length, persistence_length):
+def theory_Rg_WLC(contour_length, persistence_length, dim=3):
     """The mean squared radius of gyration of the wormlike chain.
 
     Note that this returns the square root of the mean squared radius
@@ -155,6 +193,8 @@ def theory_Rg_WLC(contour_length, persistence_length):
     persistence_length: float
         The persistence length of the chain, which is related to the
         chain's stiffness.
+    dim : int
+        The dimension of the chain. This may be either 2 or 3.
 
     Returns
     -------
@@ -162,15 +202,22 @@ def theory_Rg_WLC(contour_length, persistence_length):
         The square root of the mean squared radius of gyration.
     
     """
-    term1 = contour_length * persistence_length / 3
-    term2 = persistence_length**2
-    term3 = 2 * persistence_length**3 / contour_length**2
-    term4 = persistence_length * (1 - np.exp(-contour_length / persistence_length))
+    if dim == 2:
+        term1 = 2 * contour_length * persistence_length / 3
+        term2 = 4 * persistence_length**2
+        term3 = 16 * persistence_length**3 / contour_length**2
+        term4 = 2 * persistence_length * (1 - np.exp(-contour_length / 2 / persistence_length))
+    elif dim == 3:
+        term1 = contour_length * persistence_length / 3
+        term2 = persistence_length**2
+        term3 = 2 * persistence_length**3 / contour_length**2
+        term4 = persistence_length * (1 - np.exp(-contour_length / persistence_length))
+        
     Rg = np.sqrt(term1 - term2 + term3 * (contour_length - term4))
     
     return Rg
 
-def theory_R_WLC(contour_length, persistence_length):
+def theory_R_WLC(contour_length, persistence_length, dim=3):
     """The mean squared end-to-end distance of the wormlike chain.
 
     Note that this returns the square root fo the mean squared end-to-
@@ -179,10 +226,12 @@ def theory_R_WLC(contour_length, persistence_length):
     Parameters
     ----------
     contour_length : float
-        The total contour length of the chain
+        The total contour length of the chain.
     persistence_length: float
         The persistence length of the chain, which is related to the
         chain's stiffness.
+    dim : int
+        The dimension of the chain. This may be either 2 or 3.
 
     Returns
     -------
@@ -190,59 +239,17 @@ def theory_R_WLC(contour_length, persistence_length):
         The square root of the mean squared end-to-end distance.
 
     """
-    term1 = 2 * persistence_length * contour_length
-    term2 = persistence_length / contour_length
-    term3 = 1 - np.exp(-contour_length / persistence_length)
+    if dim == 2:
+        term1 = 4 * persistence_length * contour_length
+        term2 = 2 * persistence_length / contour_length
+    elif dim == 3:
+        term1 = 2 * persistence_length * contour_length
+        term2 = persistence_length / contour_length
+    else:
+        raise ValueError('dim must be either 2 or 3. {} was supplied'.format(dim))
+
+    term3 = 1 - np.exp(-contour_length / 2 / persistence_length)
+            
     R = np.sqrt(term1 * (1 - term2 * term3))
 
     return R
-
-'''
-# These 2 functions return the gyration radius, you can get multiple
-# values at once, but not for different values of pathLength at the
-# same time. If you need a range of values of pathLength, just call
-# this function N number of times with numpaths = 1.
-def getCppWLCradii(numPaths=1,
-                   pathLength= 1000.0,
-                   linDensity=1.0,
-                   persisLength=1.0,
-                   bumped= True,
-                   locPrecision=0.0):
-	radii = np.array(PolymerCppCore.getWLCrgs(numPaths,
-                                                  pathLength,
-                                                  linDensity,
-                                                  persisLength,
-                                                  int(bumped),
-                                                  locPrecision))
-	if not bumped:
-		return radii
-	else: #search for the delimiting value of -1
-		i = 0
-		while (radii[i]>=0.0):
-			i+=1
-		return radii[i+1:-1] #return all values after the negative one
-
-def getCppSAWLCradii(numPaths=1,
-                     pathLength=1000.0,
-                     linDensity=1.0,
-                     persisLength=1.0,
-                     segConvFactor=1.0,
-                     bumped=True,
-                     locPrecision=0.0,
-                     linkDiameter=0.5):
-	radii = np.array(PolymerCppCore.getSAWLCrgs(numPaths,
-                                                    pathLength,
-                                                    linDensity,
-                                                    persisLength,
-                                                    segConvFactor,
-                                                    int(bumped),
-                                                    locPrecision,
-                                                    linkDiameter))
-	if not bumped:
-		return radii
-	else: #search for the delimiting value of -1
-		i = 0
-		while (radii[i]>=0.0):
-			i+=1
-		return radii[i+1:-1] #return 
-'''
