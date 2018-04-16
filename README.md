@@ -22,6 +22,11 @@ and [Kyle M. Douglass](https://github.com/kmdouglass) in the
 [Laboratory of Experimental Biophysics](http://leb.epfl.ch/) for
 modeling DNA.
 
+**Important Note:** The self-avoiding wormlike chain in this program does
+  not produce the predicted scaling behavior for the moments (radius of
+  gyration and end-to-end distance). Do not use the self-avoiding chain
+  if you require exact agreement with the Flory theory.
+
 # Documentation
 
 PolymerCpp documentation may be found at http://polymercpp.readthedocs.io/en/latest/
