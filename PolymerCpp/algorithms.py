@@ -137,7 +137,7 @@ def verifyWLC(algorithm,
     ax0.hist(mean_rs1 - theory_r, bins=50, label=r'$ \langle R^2 \rangle^{1/2} $')
     ax0.hist(mean_rgs1 - theory_rg, bins=50, label=r'$ \langle R_g^2 \rangle^{1/2} $')
     ax0.set_title('Moments')
-    ax0.set_xlabel(r'$ \Delta \langle R^2 \rangle^{1/2} , \, \Delta \langle R_g^2 \rangle^{1/2} } $')
+    ax0.set_xlabel(r'$ \Delta \langle R^2 \rangle^{1/2} , \, \Delta \langle R_g^2 \rangle^{1/2} $')
     ax0.set_ylabel('Frequency')
     ax0.legend()
 
